@@ -580,43 +580,62 @@ section[id]{scroll-margin-top:84px;}
 }
 .route__note svg{width:16px;height:16px;margin-top:3px;color:var(--ink-3);}
 
-/* ---------- 7. 美食：两列菜单面板 ---------- */
+/* ---------- 7. 美食：两列菜单面板，每道菜配一张实景照片 ---------- */
 .menu{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:0 22px;
+  gap:22px;
+  counter-reset:dish;
 }
 .menu__row{
   position:relative;
-  padding:22px 24px 22px 74px;
+  display:flex;
+  flex-direction:column;
   border:1px solid var(--line);
-  border-radius:var(--r-md);
+  border-radius:var(--r-lg);
   background:var(--paper);
-  margin-bottom:22px;
+  overflow:hidden;
   transition:transform .22s ease,box-shadow .22s ease;
 }
 .menu__row:hover{transform:translateY(-2px);box-shadow:var(--sh-2);}
-/* 序号做成金色小徽标，是这一节唯一的暖色 */
-.menu__row::before{
-  counter-increment:dish;
-  content:counter(dish,decimal-leading-zero);
+/* 照片按 16:10 裁过，这里只要铺满就行 */
+.menu__media{
+  position:relative;
+  display:block;
+  aspect-ratio:16 / 10;
+  overflow:hidden;
+  background:var(--mist);
+}
+.menu__media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .55s ease;
+}
+.menu__row:hover .menu__media img{transform:scale(1.045);}
+/* 序号做成金色小徽标，压在照片左下角 —— 这一节唯一的暖色 */
+.menu__no{
   position:absolute;
-  left:24px;
-  top:23px;
+  left:14px;
+  bottom:12px;
   width:34px;
   height:34px;
   display:grid;
   place-items:center;
   border-radius:11px;
-  background:linear-gradient(150deg,#fdf6e6,#f6e6c4);
+  background:rgba(255,255,255,.94);
   color:var(--gold);
   font-size:13px;
   font-weight:800;
   font-variant-numeric:tabular-nums;
+  box-shadow:0 10px 20px -12px rgba(10,31,60,.85);
 }
-.menu{counter-reset:dish;}
-.menu__row dt{font-size:17px;font-weight:800;}
-.menu__row dd{margin-top:7px;font-size:14.5px;color:var(--muted);}
+.menu__no::before{
+  counter-increment:dish;
+  content:counter(dish,decimal-leading-zero);
+}
+.menu__row dt{padding:18px 22px 0;font-size:17px;font-weight:800;}
+.menu__row dd{padding:7px 22px 22px;font-size:14.5px;color:var(--muted);}
 .menu__try{
   display:inline-block;
   margin-top:10px;
@@ -628,34 +647,54 @@ section[id]{scroll-margin-top:84px;}
   font-weight:700;
 }
 
-/* ---------- 8. 交通：两列 ---------- */
+/* ---------- 8. 交通：两列，每张卡配一张实景照片 ---------- */
 .modes{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:22px;
 }
 .mode{
-  display:grid;
-  grid-template-columns:56px minmax(0,1fr);
-  gap:18px;
-  padding:24px;
+  display:flex;
+  flex-direction:column;
   border:1px solid var(--line);
   border-radius:var(--r-lg);
   background:var(--paper);
+  overflow:hidden;
   box-shadow:var(--sh-1);
   transition:transform .22s ease,box-shadow .22s ease;
 }
 .mode:hover{transform:translateY(-3px);box-shadow:var(--sh-2);}
+.mode__media{
+  position:relative;
+  display:block;
+  aspect-ratio:16 / 10;
+  overflow:hidden;
+  background:var(--mist);
+}
+.mode__media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .55s ease;
+}
+.mode:hover .mode__media img{transform:scale(1.045);}
+/* 图标徽章压在照片左下角，比贴在文字旁边更好认 */
 .mode__badge{
-  width:56px;
-  height:56px;
+  position:absolute;
+  left:14px;
+  bottom:12px;
+  width:46px;
+  height:46px;
   display:grid;
   place-items:center;
-  border-radius:16px;
-  background:linear-gradient(150deg,var(--mist),var(--mist-2));
+  border-radius:14px;
+  background:rgba(255,255,255,.94);
   color:var(--ink-3);
+  box-shadow:0 10px 20px -12px rgba(10,31,60,.85);
+  backdrop-filter:blur(4px);
 }
-.mode__badge svg{width:26px;height:26px;}
+.mode__badge svg{width:24px;height:24px;}
+.mode__text{padding:20px 24px 24px;}
 .mode__code{
   display:inline-block;
   padding:1px 8px;
@@ -1364,31 +1403,67 @@ section[id]{scroll-margin-top:84px;}
 
     <dl class="menu">
       <div class="menu__row reveal" style="--d:0ms">
+        <span class="menu__media">
+          <!-- 【实景照片】葡式蛋挞 | 作者 Pauloleong2002 | CC BY-SA 4.0 -->
+          <img src="macau-images/14-food-egg-tart.jpg" alt="澳门葡式蛋挞，表面烤到焦糖斑驳"
+               width="1400" height="875" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>葡式蛋挞</dt>
         <dd>酥皮烤到表面焦糖斑驳，内馅是奶和蛋的甜香，出炉十分钟内最好吃，和港式蛋挞是两种口感。
           <span class="menu__try">可试：安德鲁饼店、玛嘉烈蛋挞</span></dd>
       </div>
       <div class="menu__row reveal" style="--d:60ms">
+        <span class="menu__media">
+          <!-- 【实景照片】猪扒包 | 作者 K.Y.K.Z.K. | CC BY-SA 4.0 -->
+          <img src="macau-images/15-food-pork-chop-bun.jpg" alt="猪扒包配冻奶茶，猪扒夹在脆皮面包里"
+               width="1400" height="875" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>猪扒包</dt>
         <dd>炭火烤的猪扒夹进脆皮面包，很多店不加酱，靠肉汁和面包香撑起来，是最方便带走的一顿。
           <span class="menu__try">可试：大利来记、官也街各家小店</span></dd>
       </div>
       <div class="menu__row reveal" style="--d:60ms">
+        <span class="menu__media">
+          <!-- 【实景照片】非洲鸡（葡国菜） | 作者 Fancy-cats-are-happy-cats | Public domain -->
+          <img src="macau-images/16-food-portuguese.jpg" alt="澳门葡国菜非洲鸡，番茄香料汁配炸薯片"
+               width="1400" height="875" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>葡国菜</dt>
         <dd>马介休球、非洲鸡、葡式焗鸭饭都重油重香料，配一杯葡国酒，是澳门最像「坐下来吃一顿」的一餐。
           <span class="menu__try">可试：船屋葡国餐厅、海湾葡国餐厅</span></dd>
       </div>
       <div class="menu__row reveal" style="--d:120ms">
+        <span class="menu__media">
+          <!-- 【实景照片】水蟹粥 | 作者 avlxyz | CC BY-SA 2.0 -->
+          <img src="macau-images/17-food-crab-congee.jpg" alt="水蟹粥，蟹钳与蟹膏铺在粥面上"
+               width="1000" height="625" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>水蟹粥</dt>
         <dd>整只水蟹下锅熬粥，蟹膏把粥染成橙红色，晚上在氹仔来一碗最舒服。
           <span class="menu__try">可试：诚昌饭店（官也街）</span></dd>
       </div>
       <div class="menu__row reveal" style="--d:120ms">
+        <span class="menu__media">
+          <!-- 【实景照片】官也街的手信街 | 作者 travel oriented | CC BY-SA 2.0 -->
+          <img src="macau-images/18-food-souvenir-street.jpg" alt="氹仔官也街夜景，两侧是手信店与小吃店的招牌"
+               width="1400" height="875" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>手信</dt>
         <dd>现烤杏仁饼、肉干和蛋卷，议事亭前地和大三巴街一带最密集，多数店家可以现场试吃再买。
           <span class="menu__try">可试：钜记饼家、咀香园饼家</span></dd>
       </div>
       <div class="menu__row reveal" style="--d:180ms">
+        <span class="menu__media">
+          <!-- 【实景照片】木糠布甸 | 作者 ZhengZhou | CC BY-SA 4.0 -->
+          <img src="macau-images/19-food-serradura.jpg" alt="木糠布甸，淡忌廉与饼干碎分层压成"
+               width="1400" height="875" loading="lazy">
+          <span class="menu__no" aria-hidden="true"></span>
+        </span>
         <dt>木糠布甸</dt>
         <dd>淡忌廉和饼干碎一层层压出来，冷藏后吃，甜度不高，适合当饭后甜点。
           <span class="menu__try">可试：官也街各家饼店与咖啡店</span></dd>
@@ -1408,16 +1483,21 @@ section[id]{scroll-margin-top:84px;}
 
     <div class="modes">
       <div class="mode reveal" style="--d:0ms">
-        <span class="mode__badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="3.6" width="16" height="13" rx="3"/>
-            <path d="M4 10.4h16M7.5 20l-1.3 1.6M16.5 20l1.3 1.6M7 16.6v.8M17 16.6v.8"/>
-            <circle cx="8.2" cy="13.4" r=".9" fill="currentColor" stroke="none"/>
-            <circle cx="15.8" cy="13.4" r=".9" fill="currentColor" stroke="none"/>
-          </svg>
+        <span class="mode__media">
+          <!-- 【实景照片】澳门公共巴士 | 作者 HCCB3947 | CC BY 4.0 -->
+          <img src="macau-images/20-transport-bus.jpg" alt="澳门公共巴士 101X 快线停靠亚马喇前地站"
+               width="1400" height="875" loading="lazy">
+          <span class="mode__badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3.6" width="16" height="13" rx="3"/>
+              <path d="M4 10.4h16M7.5 20l-1.3 1.6M16.5 20l1.3 1.6M7 16.6v.8M17 16.6v.8"/>
+              <circle cx="8.2" cy="13.4" r=".9" fill="currentColor" stroke="none"/>
+              <circle cx="15.8" cy="13.4" r=".9" fill="currentColor" stroke="none"/>
+            </svg>
+          </span>
         </span>
-        <div>
+        <div class="mode__text">
           <span class="mode__code">BUS</span>
           <h3>公共巴士</h3>
           <p>几乎覆盖全部热门景点，是过桥往返澳门半岛、氹仔和路环的主力。</p>
@@ -1430,15 +1510,20 @@ section[id]{scroll-margin-top:84px;}
       </div>
 
       <div class="mode reveal" style="--d:70ms">
-        <span class="mode__badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round">
-            <rect x="5" y="3.4" width="14" height="14.2" rx="3.4"/>
-            <path d="M5 9.6h14M5 13.4h14M9.2 20.4l-1.4 1.4M14.8 20.4l1.4 1.4"/>
-            <path d="M9.6 5.9h4.8"/>
-          </svg>
+        <span class="mode__media">
+          <!-- 【实景照片】澳门轻轨氹仔线 | 作者 LN9267 | CC BY-SA 4.0 -->
+          <img src="macau-images/21-transport-lrt.jpg" alt="澳门轻轨氹仔线车厢内部"
+               width="1400" height="875" loading="lazy">
+          <span class="mode__badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="3.4" width="14" height="14.2" rx="3.4"/>
+              <path d="M5 9.6h14M5 13.4h14M9.2 20.4l-1.4 1.4M14.8 20.4l1.4 1.4"/>
+              <path d="M9.6 5.9h4.8"/>
+            </svg>
+          </span>
         </span>
-        <div>
+        <div class="mode__text">
           <span class="mode__code">LRT</span>
           <h3>澳门轻轨</h3>
           <p>氹仔线沿路氹城运行，串起海洋花园、路氹东、机场和氹仔客运码头。</p>
@@ -1451,15 +1536,20 @@ section[id]{scroll-margin-top:84px;}
       </div>
 
       <div class="mode reveal" style="--d:70ms">
-        <span class="mode__badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 16.2V7.4c0-.9.7-1.6 1.6-1.6h14.8c.9 0 1.6.7 1.6 1.6v8.8"/>
-            <path d="M3 16.2h18M6.4 19.8h11.2"/>
-            <path d="M8 10.6h3M13 10.6h3"/>
-          </svg>
+        <span class="mode__media">
+          <!-- 【实景照片】威尼斯人酒店穿梭巴士 | 作者 LN9267 | CC BY-SA 4.0 -->
+          <img src="macau-images/22-transport-shuttle.jpg" alt="威尼斯人酒店的蓝色穿梭巴士"
+               width="1400" height="875" loading="lazy">
+          <span class="mode__badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 16.2V7.4c0-.9.7-1.6 1.6-1.6h14.8c.9 0 1.6.7 1.6 1.6v8.8"/>
+              <path d="M3 16.2h18M6.4 19.8h11.2"/>
+              <path d="M8 10.6h3M13 10.6h3"/>
+            </svg>
+          </span>
         </span>
-        <div>
+        <div class="mode__text">
           <span class="mode__code">SHUT</span>
           <h3>酒店穿梭巴士</h3>
           <p>大型度假村在口岸、码头和主要景点都设免费穿梭巴士，去路氹城一带最省事。</p>
@@ -1472,14 +1562,19 @@ section[id]{scroll-margin-top:84px;}
       </div>
 
       <div class="mode reveal" style="--d:140ms">
-        <span class="mode__badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-               stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2.8" y="5.2" width="18.4" height="13.6" rx="3"/>
-            <path d="M2.8 9.8h18.4M6.4 14.6h4.2"/>
-          </svg>
+        <span class="mode__media">
+          <!-- 【实景照片】车上的澳门通读卡机 | 作者 LN9267 | CC BY-SA 4.0 -->
+          <img src="macau-images/23-transport-macau-pass.jpg" alt="澳门巴士上的澳门通读卡机与投币箱"
+               width="1280" height="800" loading="lazy">
+          <span class="mode__badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2.8" y="5.2" width="18.4" height="13.6" rx="3"/>
+              <path d="M2.8 9.8h18.4M6.4 14.6h4.2"/>
+            </svg>
+          </span>
         </span>
-        <div>
+        <div class="mode__text">
           <span class="mode__code">CARD</span>
           <h3>澳门通 / 乘车码</h3>
           <p>储值卡在公交和便利店通用，也可以直接用内地乘车码扫码上车。</p>
