@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 手机·兼容版：一个 JavaScript 都不用，任何浏览器/查看器都能用 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>澳门旅游攻略 · 手机版</title>
+<meta name="description" content="澳门旅游攻略手机版：景点、美食、交通、区域地图与出行小贴士。">
+
+<style>
+/* ==================================================================
+   澳门旅游攻略 · 手机版（兼容版）
+   ------------------------------------------------------------------
+   三处主要交互全部用浏览器原生能力，即使对方把 JavaScript 拦掉也能用：
+     1. 轮播翻页  → CSS 滚动吸附（scroll-snap），手指左右滑就行
+     2. 地图放大  → 勾选框 + CSS（纯 CSS 的开关，不用脚本）
+     3. 区域详情  → HTML 原生折叠面板 <details>，点一下就地展开
+   唯一的脚本只做「联网增强」：把静态地图换成可缩放的真实地图，
+   加载失败或没有网络就安静退出，页面回到上面的纯 CSS 形态，不留空白。
+   配色、字体、圆角、阴影等要求与香港版一致。
+   照片来自 Wikimedia Commons（CC 授权），作者与许可证见 macau-images/图片来源.md。
+   ================================================================== */
+
+:root{
+  --ink:#0a1f3c;
+  --ink-soft:#17406f;
+  --muted:#5c6f8a;
+  --paper:#ffffff;
+  --mist:#f1f5fa;
+  --line:#d3deeb;
+  --accent:#c8102e;
+  --r-lg:16px;
+  --r-md:12px;
+  --r-sm:9px;
+  --shadow:0 12px 28px -20px rgba(10,31,60,.6);
+  --tabbar-h:62px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+         "Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+}
+
+*{box-sizing:border-box;}
+html{
+  background:#e9eef5;
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  max-width:520px;
+  margin:0 auto;
+  padding-bottom:calc(var(--tabbar-h) + 20px);
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font);
+  font-size:16.5px;
+  line-height:1.8;
+  -webkit-tap-highlight-color:transparent;
+}
+img{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+h1,h2,h3{margin:0;line-height:1.28;}
+p{margin:0;}
+ul,ol,dl,dd,dt{margin:0;padding:0;list-style:none;}
+summary{list-style:none;cursor:pointer;}
+summary::-webkit-details-marker{display:none;}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  height:56px;
+  padding:0 18px;
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:17px;}
+.topbar__tag{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* ---------- 1. 轮播：CSS 滚动吸附，手指左右滑 ---------- */
+.shots{
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  background:var(--ink);
+}
+.shots::-webkit-scrollbar{display:none;}
+.shot{
+  position:relative;
+  flex:0 0 100%;
+  margin:0;
+  height:clamp(240px,62vw,340px);
+  scroll-snap-align:center;
+}
+.shot img{width:100%;height:100%;object-fit:cover;}
+.shot__shade{
+  position:absolute;
+  inset:auto 0 0 0;
+  height:62%;
+  background:linear-gradient(180deg,rgba(10,31,60,0),rgba(10,31,60,.9));
+}
+.shot__text{
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:26px;
+  color:#fff;
+}
+.shot__name{font-size:21px;font-weight:700;}
+.shot__desc{
+  margin-top:5px;
+  font-size:14px;
+  color:rgba(255,255,255,.84);
+}
+/* 页码圆点同时是锚点：点它就跳到对应那张（不需要脚本） */
+.shot-nav{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 18px;
+  background:var(--ink);
+}
+.shot-nav a{
+  display:block;
+  width:26px;
+  height:4px;
+  border-radius:2px;
+  background:rgba(255,255,255,.45);
+}
+.shot-nav a:first-child{background:#fff;}
+.shot-nav__hint{
+  margin-left:auto;
+  font-size:12px;
+  color:rgba(255,255,255,.72);
+}
+
+/* ---------- 首页介绍 ---------- */
+.intro{padding:30px 18px 6px;}
+.intro h2{font-size:30px;letter-spacing:-.02em;}
+.intro__lead{margin-top:12px;font-size:15.5px;color:var(--muted);}
+.facts{margin-top:22px;}
+.fact{padding:16px 0;border-top:1px solid var(--line);}
+.fact dt{font-size:14.5px;font-weight:700;}
+.fact dd{margin-top:6px;font-size:14.5px;color:var(--muted);}
+
+/* ---------- 区块 ---------- */
+.section{padding:38px 18px;}
+.section--tint{background:var(--mist);}
+section[id]{scroll-margin-top:64px;}
+.section__head h2{font-size:23px;}
+.section__head p{margin-top:9px;font-size:14.5px;color:var(--muted);}
+
+/* ---------- 景点 ---------- */
+.route{margin-top:26px;}
+.route__head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:15px;
+  font-weight:700;
+}
+.route__head::after{content:"";flex:1;height:1px;background:var(--line);}
+.stops{position:relative;margin-top:4px;}
+.stops::before{
+  content:"";
+  position:absolute;
+  left:4px;
+  top:22px;
+  bottom:22px;
+  width:2px;
+  background:var(--line);
+}
+.stop{
+  position:relative;
+  display:grid;
+  grid-template-columns:86px minmax(0,1fr);
+  gap:13px;
+  padding:15px 0 15px 22px;
+  border-bottom:1px solid var(--line);
+}
+.stop:last-child{border-bottom:0;}
+.stop::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:22px;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--paper);
+  border:3px solid var(--ink);
+}
+.section--tint .stop::before{background:var(--mist);}
+.stop img{width:86px;height:68px;object-fit:cover;border-radius:var(--r-md);}
+.stop h3{font-size:17px;}
+.stop p{margin-top:5px;font-size:14px;color:var(--muted);}
+.stop__time{
+  grid-column:2;
+  justify-self:start;
+  margin-top:8px;
+  padding:2px 10px;
+  border-radius:999px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  font-size:12.5px;
+  font-weight:700;
+}
+.route__note{
+  margin-top:12px;
+  padding-left:11px;
+  border-left:2px solid var(--line);
+  font-size:13.5px;
+  color:var(--muted);
+}
+
+/* ---------- 美食 ---------- */
+.menu{
+  margin-top:20px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow);
+  padding:2px 16px;
+}
+.menu__row{padding:15px 0;border-bottom:1px solid var(--line);}
+.menu__row:last-child{border-bottom:0;}
+.menu__row dt{font-size:16px;font-weight:700;}
+.menu__row dd{margin-top:5px;font-size:14px;color:var(--muted);}
+.menu__try{display:block;margin-top:5px;font-size:13.5px;color:var(--ink-soft);}
+
+/* ---------- 交通 ---------- */
+.modes{margin-top:18px;}
+.mode{padding:16px 0;border-top:1px solid var(--line);}
+.mode__top{display:flex;align-items:center;gap:10px;}
+.mode__code{
+  display:inline-flex;
+  align-items:center;
+  height:24px;
+  padding:0 9px;
+  border-radius:var(--r-sm);
+  background:var(--ink);
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.08em;
+}
+.mode h3{font-size:16px;}
+.mode p{margin-top:8px;font-size:14px;color:var(--muted);}
+.mode li{
+  position:relative;
+  margin-top:6px;
+  padding-left:14px;
+  font-size:13.5px;
+  color:var(--muted);
+}
+.mode li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.7em;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--line);
+}
+
+/* ---------- 2. 地图：静态图 + 纯 CSS 放大开关 ---------- */
+.mapbox{
+  position:relative;
+  margin-top:18px;
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  background:var(--ink);
+}
+.zoom-check{
+  position:absolute;
+  width:1px;height:1px;
+  opacity:0;
+}
+.mapland{overflow:hidden;}
+/* height:auto 不能省：img 上有 height 属性，只改 width 的话图会被拉高变形 */
+.mapland img{width:100%;height:auto;display:block;}
+.zoom-btn{
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  padding:0 14px;
+  border-radius:var(--r-sm);
+  background:rgba(255,255,255,.95);
+  color:var(--ink);
+  font-size:14px;
+  font-weight:700;
+  box-shadow:0 4px 12px -6px rgba(10,31,60,.7);
+}
+.zoom-btn::after{content:"放大";}
+/* 勾选后：图片放大到 210%，容器可拖动查看 */
+.zoom-check:checked ~ .mapland{overflow:auto;max-height:72vh;}
+.zoom-check:checked ~ .mapland img{width:210%;max-width:none;}
+.zoom-check:checked ~ .zoom-btn{background:var(--accent);color:#fff;}
+.zoom-check:checked ~ .zoom-btn::after{content:"缩小";}
+.zoom-check:focus-visible ~ .zoom-btn{outline:2px solid var(--accent);outline-offset:2px;}
+.map-note{margin-top:12px;font-size:12.5px;color:var(--muted);}
+
+/* 联网时的真地图：默认不显示、不接收点击，
+   脚本把地图库加载成功后才加 .is-live 换成它；失败或没网就一直用上面的静态图 */
+#liveMap{display:none;height:clamp(320px,76vw,420px);}
+.mapbox.is-live #liveMap{display:block;}
+.mapbox.is-live .mapland,
+.mapbox.is-live .zoom-btn,
+.mapbox.is-live .zoom-check{display:none;}
+/* 窄屏上 MapLibre 自带的署名控件会占掉半张图，这里换成一行小字，仍在图内可见 */
+.map-credit{
+  display:none;
+  position:absolute;
+  left:8px;
+  top:8px;          /* 放左上角：右下和底部中间是「路环」标记的位置，别压住它 */
+  z-index:2;
+  padding:2px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.82);
+  color:var(--muted);
+  font-size:10.5px;
+  line-height:1.5;
+  pointer-events:none;
+}
+.mapbox.is-live .map-credit{display:block;}
+
+/* 真地图上的三个标记（MapLibre 自定义 DOM 标记），样式与电脑版一致 */
+.marker{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  padding:0;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+}
+.marker__dot{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:var(--ink);
+  border:3px solid #fff;
+  box-shadow:0 0 0 5px rgba(10,31,60,.22);
+}
+.marker__label{
+  padding:2px 9px;
+  border-radius:999px;
+  background:#fff;
+  color:var(--ink);
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+  box-shadow:0 2px 8px -4px rgba(10,31,60,.6);
+}
+
+/* ---------- 3. 区域详情：原生 <details>，不需要脚本 ---------- */
+.areas{margin-top:22px;border-top:1px solid var(--line);}
+.area{border-bottom:1px solid var(--line);}
+.area summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:56px;
+  padding:8px 2px;
+  font-size:16.5px;
+  font-weight:700;
+}
+.area summary::after{
+  content:"＋";
+  font-size:18px;
+  font-weight:400;
+  color:var(--accent);
+}
+.area[open] summary::after{content:"－";}
+.area__body{padding:0 2px 18px;}
+.area__body h4{margin:12px 0 6px;font-size:13.5px;color:var(--accent);}
+.area__body li{
+  position:relative;
+  margin-bottom:6px;
+  padding-left:14px;
+  font-size:14.5px;
+  color:var(--muted);
+}
+.area__body li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.72em;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--line);
+}
+.area__body p{font-size:14.5px;color:var(--muted);}
+
+/* ---------- 页脚 ---------- */
+.site-footer{
+  background:var(--ink);
+  color:rgba(255,255,255,.84);
+  padding:32px 18px;
+}
+.site-footer h2{font-size:20px;color:#fff;}
+.footer-grid{margin-top:18px;}
+.footer-grid > div{padding:14px 0;border-top:1px solid rgba(255,255,255,.22);}
+.footer-grid h3{font-size:15px;color:#fff;}
+.footer-grid p{margin-top:7px;font-size:14px;color:rgba(255,255,255,.72);}
+.footer-note{
+  margin-top:22px;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.18);
+  font-size:12.5px;
+  color:rgba(255,255,255,.6);
+}
+
+/* ---------- 底部标签栏（纯锚点，不需要脚本） ---------- */
+.tabbar{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  z-index:60;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:520px;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(255,255,255,.97);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+}
+.tabbar a{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  min-height:var(--tabbar-h);
+  font-size:11.5px;
+  color:var(--muted);
+}
+.tabbar svg{width:21px;height:21px;}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h1>澳门旅游攻略</h1>
+  <span class="topbar__tag">手机版</span>
+</header>
+
+<!-- ========== 1. 轮播：手指左右滑动（CSS 滚动吸附） ========== -->
+<section class="shots" id="home" aria-label="澳门风景图片">
+
+  <!-- 【实景照片】澳门半岛夜景 | 作者 Charlie fong | CC BY-SA 4.0 -->
+  <figure class="shot" id="shot1">
+    <img src="macau-images/01-hero-skyline.jpg" alt="澳门半岛夜景天际线" width="1920" height="1080">
+    <div class="shot__shade"></div>
+    <figcaption class="shot__text">
+      <div class="shot__name">澳门半岛</div>
+      <p class="shot__desc">南湾一带的新楼和老街隔水相望，晚上最好看</p>
+    </figcaption>
+  </figure>
+
+  <!-- 【实景照片】大三巴牌坊 | 作者 edwin.11 | CC BY 2.0 -->
+  <figure class="shot" id="shot2">
+    <img src="macau-images/02-slide-ruins.jpg" alt="大三巴牌坊（圣保禄教堂前壁）"
+         width="1920" height="1277">
+    <div class="shot__shade"></div>
+    <figcaption class="shot__text">
+      <div class="shot__name">大三巴牌坊</div>
+      <p class="shot__desc">一场大火只留下这面前壁，是澳门最出名的一张脸</p>
+    </figcaption>
+  </figure>
+
+  <!-- 【实景照片】议事亭前地 | 作者 The Red Hat of Pat Ferrick | Public domain -->
+  <figure class="shot" id="shot3">
+    <img src="macau-images/03-slide-senado.jpg" alt="议事亭前地的波浪碎石地与夜色"
+         width="1542" height="1156">
+    <div class="shot__shade"></div>
+    <figcaption class="shot__text">
+      <div class="shot__name">议事亭前地</div>
+      <p class="shot__desc">波浪碎石地配暖黄骑楼，白天晚上两种颜色</p>
+    </figcaption>
+  </figure>
+
+  <!-- 【实景照片】澳门旅游塔 | 作者 AngMoKio | CC BY-SA 3.0 -->
+  <figure class="shot" id="shot4">
+    <img src="macau-images/04-slide-tower.jpg" alt="澳门旅游塔夜景"
+         width="1280" height="960">
+    <div class="shot__shade"></div>
+    <figcaption class="shot__text">
+      <div class="shot__name">澳门旅游塔</div>
+      <p class="shot__desc">南湾湖旁的地标，塔上能看完整片半岛</p>
+    </figcaption>
+  </figure>
+
+  <!-- 【实景照片】路氹城 | 作者 Jimmy Yao | CC BY-SA 2.0 -->
+  <figure class="shot" id="shot5">
+    <img src="macau-images/05-slide-cotai-night.jpg" alt="路氹城威尼斯人酒店夜景"
+         width="1280" height="960">
+    <div class="shot__shade"></div>
+    <figcaption class="shot__text">
+      <div class="shot__name">路氹城</div>
+      <p class="shot__desc">威尼斯人、巴黎人连成一线，入夜全是灯光</p>
+    </figcaption>
+  </figure>
+</section>
+
+<!-- 页码圆点：本身就是锚点，点第几个就跳到第几张 -->
+<nav class="shot-nav" aria-label="图片页码">
+  <a href="#shot1" aria-label="第 1 张"></a>
+  <a href="#shot2" aria-label="第 2 张"></a>
+  <a href="#shot3" aria-label="第 3 张"></a>
+  <a href="#shot4" aria-label="第 4 张"></a>
+  <a href="#shot5" aria-label="第 5 张"></a>
+  <span class="shot-nav__hint">左右滑动</span>
+</nav>
+
+<!-- ========== 首页介绍 ========== -->
+<section class="intro" id="intro">
+  <h2>澳门旅游攻略</h2>
+  <p class="intro__lead">
+    澳门把四百年的中西生活压进 33 平方公里里。这份攻略整理了 10 个热门景点、
+    必吃美食、常用交通和一张区域地图，按 2–3 天自由行来安排。
+  </p>
+
+  <dl class="facts">
+    <div class="fact">
+      <dt>最佳出行时间</dt>
+      <dd>10 月至次年 3 月最舒适，气温约 17–24℃，湿度低，适合在老城区慢慢走。
+          4–9 月多雨且是台风季，出发前先看天气预警。</dd>
+    </div>
+    <div class="fact">
+      <dt>签注与证件</dt>
+      <dd>内地居民需要《往来港澳通行证》和有效澳门签注，停留期限与次数以签注标注为准。
+          出发前用出入境官方渠道核对有效期和剩余次数，过关时随身带通行证原件。</dd>
+    </div>
+  </dl>
+</section>
+
+<!-- ========== 景点 ========== -->
+<section class="section section--tint" id="spots">
+  <div class="section__head">
+    <h2>热门景点</h2>
+    <p>按地理区域分成三条线，同一组的地点可以同一天连着走。</p>
+  </div>
+
+  <div class="route">
+    <h3 class="route__head">澳门半岛 · 历史城区</h3>
+    <ol class="stops">
+      <li class="stop">
+        <!-- 【实景照片】大三巴牌坊 | 作者 edwin.11 | CC BY 2.0 -->
+        <img src="macau-images/02-slide-ruins.jpg" alt="大三巴牌坊（圣保禄教堂前壁）"
+             width="1920" height="1277">
+        <div>
+          <h3>大三巴牌坊</h3>
+          <p>教堂前壁和旁边的大三巴街手信街一起逛，上午人最少。</p>
+        </div>
+        <span class="stop__time">2–3 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】议事亭前地 | 作者 The Red Hat of Pat Ferrick | Public domain -->
+        <img src="macau-images/03-slide-senado.jpg" alt="议事亭前地的波浪碎石地"
+             width="1542" height="1156">
+        <div>
+          <h3>议事亭前地</h3>
+          <p>波浪碎石地、玫瑰堂、邮政总局都在这一圈。</p>
+        </div>
+        <span class="stop__time">1–2 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】大炮台 | 作者 Diego Delso | CC BY-SA 3.0 -->
+        <img src="macau-images/06-spot-fortress.jpg" alt="大炮台（圣保禄炮台）的城墙"
+             width="1920" height="1280">
+        <div>
+          <h3>大炮台</h3>
+          <p>就在大三巴旁边，城墙边能俯瞰整片老城区。</p>
+        </div>
+        <span class="stop__time">1 小时</span>
+      </li>
+    </ol>
+    <p class="route__note">这一条全在步行范围内，大三巴走到议事亭前地约 10 分钟。</p>
+  </div>
+
+  <div class="route">
+    <h3 class="route__head">澳门半岛 · 山顶与海滨</h3>
+    <ol class="stops">
+      <li class="stop">
+        <!-- 【实景照片】妈阁庙 | 作者 Abasaa | Public domain -->
+        <img src="macau-images/07-spot-a-ma-temple.jpg" alt="妈阁庙正门"
+             width="1920" height="1440">
+        <div>
+          <h3>妈阁庙</h3>
+          <p>澳门最老的庙宇，也是葡萄牙人当年登岸的地方。</p>
+        </div>
+        <span class="stop__time">1 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】澳门旅游塔 | 作者 AngMoKio | CC BY-SA 3.0 -->
+        <img src="macau-images/04-slide-tower.jpg" alt="澳门旅游塔夜景"
+             width="1280" height="960">
+        <div>
+          <h3>澳门旅游塔</h3>
+          <p>观光层之外还有空中漫步，傍晚上去能看日落。</p>
+        </div>
+        <span class="stop__time">2–3 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】东望洋灯塔 | 作者 Minghong | CC BY-SA 3.0 -->
+        <img src="macau-images/08-spot-guia.jpg" alt="东望洋山上的灯塔与圣母雪地殿教堂"
+             width="1920" height="1440">
+        <div>
+          <h3>东望洋灯塔</h3>
+          <p>中国海岸第一座现代灯塔，旁边炮台和小教堂一起看。</p>
+        </div>
+        <span class="stop__time">1–2 小时</span>
+      </li>
+    </ol>
+    <p class="route__note">妈阁庙沿西湾湖走到旅游塔约 20 分钟，上东望洋山建议换巴士。</p>
+  </div>
+
+  <div class="route">
+    <h3 class="route__head">氹仔与路环</h3>
+    <ol class="stops">
+      <li class="stop">
+        <!-- 【实景照片】官也街 | 作者 Kamfutiam Georgez | CC0 -->
+        <img src="macau-images/09-spot-rua-cunha.jpg" alt="氹仔官也街夜景"
+             width="1920" height="1440">
+        <div>
+          <h3>官也街</h3>
+          <p>氹仔老城的窄巷，手信店和猪扒包都集中在这条街上。</p>
+        </div>
+        <span class="stop__time">1–2 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】龙环葡韵 | 作者 Abasaa | Public domain -->
+        <img src="macau-images/10-spot-taipa-houses.jpg" alt="龙环葡韵住宅式博物馆"
+             width="1920" height="1440">
+        <div>
+          <h3>龙环葡韵</h3>
+          <p>五栋薄荷绿的葡式住宅，对面就是湿地。</p>
+        </div>
+        <span class="stop__time">1 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】路环市区 | 作者 Abasaa | Public domain -->
+        <img src="macau-images/11-spot-coloane.jpg" alt="路环市区圣方济各圣堂"
+             width="1280" height="960">
+        <div>
+          <h3>路环市区</h3>
+          <p>圣方济各圣堂和十月初五马路，是澳门最安静的老城区。</p>
+        </div>
+        <span class="stop__time">1–2 小时</span>
+      </li>
+      <li class="stop">
+        <!-- 【实景照片】黑沙海滩 | 作者 Abasaa | Public domain -->
+        <img src="macau-images/12-spot-hac-sa.jpg" alt="路环黑沙海滩"
+             width="1280" height="720">
+        <div>
+          <h3>黑沙海滩</h3>
+          <p>路环最南端的海滩，沙子偏黑，傍晚适合散步。</p>
+        </div>
+        <span class="stop__time">1 小时</span>
+      </li>
+    </ol>
+    <p class="route__note">从氹仔坐巴士到路环约 20 分钟，一路都能用同一张乘车卡。</p>
+  </div>
+</section>
+
+<!-- ========== 美食 ========== -->
+<section class="section" id="food">
+  <div class="section__head">
+    <h2>澳门美食</h2>
+    <p>六样先吃一轮，基本就摸到本地口味了。</p>
+  </div>
+
+  <dl class="menu">
+    <div class="menu__row">
+      <dt>葡式蛋挞</dt>
+      <dd>酥皮烤到表面焦糖斑驳，出炉十分钟内最好吃。
+        <span class="menu__try">可试：安德鲁饼店、玛嘉烈蛋挞</span></dd>
+    </div>
+    <div class="menu__row">
+      <dt>猪扒包</dt>
+      <dd>炭火烤的猪扒夹进脆皮面包，很多店不加酱，最方便带走。
+        <span class="menu__try">可试：大利来记、官也街各家小店</span></dd>
+    </div>
+    <div class="menu__row">
+      <dt>葡国菜</dt>
+      <dd>马介休球、非洲鸡、葡式焗鸭饭，重油重香料，适合坐下来吃一顿。
+        <span class="menu__try">可试：船屋葡国餐厅、海湾葡国餐厅</span></dd>
+    </div>
+    <div class="menu__row">
+      <dt>水蟹粥</dt>
+      <dd>整只水蟹下锅熬粥，蟹膏把粥染成橙红色。
+        <span class="menu__try">可试：诚昌饭店（官也街）</span></dd>
+    </div>
+    <div class="menu__row">
+      <dt>手信</dt>
+      <dd>现烤杏仁饼、肉干和蛋卷，多数店家可以现场试吃再买。
+        <span class="menu__try">可试：钜记饼家、咀香园饼家</span></dd>
+    </div>
+    <div class="menu__row">
+      <dt>木糠布甸</dt>
+      <dd>淡忌廉和饼干碎一层层压出来，冷藏后吃，甜度不高。
+        <span class="menu__try">可试：官也街各家饼店与咖啡店</span></dd>
+    </div>
+  </dl>
+</section>
+
+<!-- ========== 交通 ========== -->
+<section class="section section--tint" id="transport">
+  <div class="section__head">
+    <h2>交通出行</h2>
+    <p>澳门不大，公交加轻轨基本能覆盖全部行程。</p>
+  </div>
+
+  <div class="modes">
+    <div class="mode">
+      <div class="mode__top"><span class="mode__code">BUS</span><h3>公共巴士</h3></div>
+      <p>几乎覆盖全部热门景点，是过桥往返半岛、氹仔和路环的主力。</p>
+      <ul>
+        <li>常用线路：3、10、25 等，车头会写明终点站</li>
+        <li>上车投币或刷澳门通、乘车码</li>
+      </ul>
+    </div>
+    <div class="mode">
+      <div class="mode__top"><span class="mode__code">LRT</span><h3>澳门轻轨</h3></div>
+      <p>氹仔线沿路氹城运行，串起海洋花园、路氹东、机场和氹仔码头。</p>
+      <ul>
+        <li>跨海往返氹仔最省时间的方式</li>
+        <li>可在车站购票或刷卡入闸</li>
+      </ul>
+    </div>
+    <div class="mode">
+      <div class="mode__top"><span class="mode__code">SHUT</span><h3>酒店穿梭巴士</h3></div>
+      <p>大型度假村在口岸、码头和主要景点都设免费班车，去路氹城最省事。</p>
+      <ul>
+        <li>班次按现场时刻表，通常十几分钟一班</li>
+        <li>关闸、港澳码头、机场都有上车点</li>
+      </ul>
+    </div>
+    <div class="mode">
+      <div class="mode__top"><span class="mode__code">CARD</span><h3>澳门通 / 乘车码</h3></div>
+      <p>储值卡在公交和便利店通用，也可以直接用内地的乘车码扫码上车。</p>
+      <ul>
+        <li>便利店和客服中心都能充值</li>
+        <li>只在澳门待两三天，用乘车码更省事</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 区域地图 + 区域详情 ========== -->
+<section class="section" id="map">
+  <div class="section__head">
+    <h2>澳门区域地图</h2>
+    <p>下面默认是静态地图，点右上角「放大」可以拖着看；联网时会自动换成可拖动的实景地图。
+       再往下点区域名字，就地展开该区域的推荐。</p>
+  </div>
+
+  <!-- 地图框：静态图 + 纯 CSS 放大开关是「没有脚本」时的兜底，
+       联网且地图库加载成功时，脚本会把它换成可缩放的真实地图 -->
+  <div class="mapbox" id="mapBox">
+    <input type="checkbox" id="mapZoom" class="zoom-check">
+    <div class="mapland">
+      <!-- 【实景地图】澳门静态地图：用 MapLibre + OpenFreeMap 渲染导出，
+           底图数据 © OpenStreetMap 贡献者 -->
+      <img src="macau-images/13-map-macau.png" alt="澳门区域地图（半岛、氹仔、路环）"
+           width="1600" height="900">
+    </div>
+    <label class="zoom-btn" for="mapZoom" aria-label="放大或缩小地图"></label>
+    <!-- 真地图容器：联网时脚本会往里挂 MapLibre 地图 -->
+    <div id="liveMap" aria-label="澳门实景地图"></div>
+    <span class="map-credit">© OpenStreetMap 贡献者 · OpenFreeMap</span>
+  </div>
+  <p class="map-note">
+    两种模式用的是同一套底图和配色：联网时显示可以双指缩放、拖动的地图（数据 © OpenStreetMap 贡献者，
+    瓦片由 OpenFreeMap 提供），没有网络或地图加载失败时自动退回上面这张静态图。
+  </p>
+
+  <!-- 三个区域：原生折叠面板，点一下就地展开 -->
+  <div class="areas">
+    <details class="area" data-area="peninsula">
+      <summary>澳门半岛</summary>
+      <div class="area__body">
+        <h4>推荐景点</h4>
+        <ul>
+          <li>大三巴牌坊：圣保禄教堂前壁，旁边就是大三巴街手信街</li>
+          <li>议事亭前地：波浪碎石地、玫瑰堂与老骑楼</li>
+          <li>妈阁庙、大炮台、东望洋灯塔：半岛另外三个必看点</li>
+        </ul>
+        <h4>推荐美食</h4>
+        <ul>
+          <li>葡式蛋挞：出炉十分钟内最好吃</li>
+          <li>猪扒包与手信：大三巴街一路都能买到</li>
+        </ul>
+        <h4>小贴士</h4>
+        <p>交通：半岛内主要靠步行，大三巴走到议事亭前地约 10 分钟；跨区坐巴士，投币或刷卡都可以。</p>
+      </div>
+    </details>
+
+    <details class="area" data-area="cotai">
+      <summary>氹仔 · 路氹城</summary>
+      <div class="area__body">
+        <h4>推荐景点</h4>
+        <ul>
+          <li>官也街：氹仔老城的窄巷，手信和小吃都集中在这条街</li>
+          <li>龙环葡韵：五栋薄荷绿的葡式住宅，对面就是湿地</li>
+          <li>路氹城酒店群：威尼斯人、巴黎人沿着一条马路连成一线</li>
+        </ul>
+        <h4>推荐美食</h4>
+        <ul>
+          <li>水蟹粥：整只水蟹熬粥，宵夜首选</li>
+          <li>木糠布甸：淡忌廉和饼干碎层层压出来</li>
+        </ul>
+        <h4>小贴士</h4>
+        <p>交通：从澳门半岛坐巴士或轻轨过桥约 15–20 分钟；各度假村之间有免费穿梭巴士。</p>
+      </div>
+    </details>
+
+    <details class="area" data-area="coloane">
+      <summary>路环</summary>
+      <div class="area__body">
+        <h4>推荐景点</h4>
+        <ul>
+          <li>圣方济各圣堂：路环市区的中心，红色的门面很好认</li>
+          <li>十月初五马路：沿堤岸的老房子、小咖啡馆和饼店</li>
+          <li>黑沙海滩：路环最南端的海滩，沙子偏黑</li>
+        </ul>
+        <h4>推荐美食</h4>
+        <ul>
+          <li>安德鲁葡挞：路环市区的老店，澳门葡式蛋挞的起点</li>
+          <li>路环市区小吃：沿街的小店可以慢慢挑</li>
+        </ul>
+        <h4>小贴士</h4>
+        <p>交通：从氹仔坐巴士约 20 分钟；路环市区范围不大，步行就能走完。</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ========== 页脚 ========== -->
+<footer class="site-footer">
+  <h2>出行小贴士</h2>
+  <div class="footer-grid">
+    <div>
+      <h3>货币</h3>
+      <p>通用澳门元（MOP）。港币也普遍通用，多数商家按 1:1 收；街市小吃只收现金，
+         建议随身备少量现金。</p>
+    </div>
+    <div>
+      <h3>电话卡</h3>
+      <p>便利店和电讯门店能买本地储值卡（CTM、3 澳门、SmarTone），
+         常见 3–7 天流量套餐。价格以现场售价为准。</p>
+    </div>
+    <div>
+      <h3>海关注意</h3>
+      <p>出入境对烟酒、现金和受管制物品有限量规定，超额需要申报；回内地携带自用物品有免税额度。
+         具体标准以海关和出入境官方最新公布为准。</p>
+    </div>
+  </div>
+  <div class="footer-note">
+    澳门旅游攻略 · 手机版 · 学生课程作业演示页面<br>
+    照片来自 Wikimedia Commons（CC 授权），作者与许可证另见 图片来源.md；
+    地图底图 © OpenStreetMap 贡献者，由 OpenFreeMap 提供
+  </div>
+</footer>
+
+<!-- ========== 底部标签栏（纯锚点跳转） ========== -->
+<nav class="tabbar" aria-label="页面导航">
+  <a href="#home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 10.6 12 4l8 6.6V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>
+    </svg>
+    首页
+  </a>
+  <a href="#spots">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/>
+      <circle cx="12" cy="10" r="2.5"/>
+    </svg>
+    景点
+  </a>
+  <a href="#food">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 11h16a8 8 0 0 1-16 0z"/>
+      <path d="M8 7.6c.9-.8.9-1.7 0-2.5M12 7.6c.9-.8.9-1.7 0-2.5M16 7.6c.9-.8.9-1.7 0-2.5"/>
+    </svg>
+    美食
+  </a>
+  <a href="#transport">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="5" y="3.5" width="14" height="12" rx="2.5"/>
+      <path d="M5 9.5h14M9 19l-1.6 2.5M15 19l1.6 2.5"/>
+    </svg>
+    交通
+  </a>
+  <a href="#map">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 4 3.5 6.4v13.1L9 17l6 2.5 5.5-2.4V4L15 6.5 9 4z"/>
+      <path d="M9 4v13M15 6.5v13"/>
+    </svg>
+    地图
+  </a>
+</nav>
+
+<script>
+/* ==================================================================
+   手机版里唯一的一段脚本，只干一件事：联网时把静态地图升级成真地图。
+   1. 地图库（MapLibre）或瓦片加载失败 → 什么都不做，继续用静态图 + CSS 放大；
+   2. 加载成功 → 给 .mapbox 加 .is-live，静态图和「放大」按钮让位给真地图；
+   3. 点地图上的标记 → 展开下面同名的区域面板并滚过去。
+   没有 JavaScript 时，上面三段（滚动吸附轮播、CSS 放大、<details> 折叠）照常工作。
+   ================================================================== */
+(function initLiveMap(){
+  var box = document.getElementById('mapBox');
+  var container = document.getElementById('liveMap');
+  if (!box || !container) return;
+
+  var LIB_JS  = 'https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js';
+  var LIB_CSS = 'https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css';
+  var STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+  var CENTER = [113.5530, 22.1565];   // 半岛、氹仔、路环三块的正中间
+
+  // 三个区域：坐标给真地图用，key 对应下面 <details data-area="...">
+  var AREAS = {
+    peninsula: { title: '澳门半岛',      coord: [113.5463, 22.1965] },
+    cotai:     { title: '氹仔 · 路氹城',  coord: [113.5605, 22.1480] },
+    coloane:   { title: '路环',          coord: [113.5560, 22.1170] }
+  };
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var LIVE = false;
+  var map = null;
+
+  // 手机上的地图框比电脑矮，缩放级别按框高算出来，
+  // 保证半岛到路环（约 0.105 个纬度）连同标记文字刚好装得下，换机型也不会跑偏。
+  // 注意 MapLibre 用 512px 瓦片，zoom 数值比传统 256px 瓦片大 1。
+  function fitZoom(){
+    var h = container.clientHeight || 320;
+    var metersPerPixel = 0.125 * 111320 / h;
+    return Math.log2(145036 / metersPerPixel) - 1;
+  }
+
+  function loadCss(href){
+    var l = document.createElement('link');
+    l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
+  }
+  function loadJs(src){
+    return new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = resolve;
+      s.onerror = function(){ reject(new Error('地图库加载失败')); };
+      document.head.appendChild(s);
+    });
+  }
+  function backToStatic(){
+    LIVE = false;
+    box.classList.remove('is-live');
+  }
+
+  loadJs(LIB_JS).then(function(){
+    loadCss(LIB_CSS);
+    if (typeof maplibregl === 'undefined') throw new Error('地图库未就绪');
+
+    // 先让容器有高度，再建地图，否则 canvas 会按 0 高度初始化
+    box.classList.add('is-live');
+
+    map = new maplibregl.Map({
+      container: container,
+      style: STYLE_URL,
+      center: CENTER,
+      zoom: fitZoom(),
+      minZoom: 9,
+      maxZoom: 17,
+      dragRotate: false,          // 手机上不需要旋转，避免误触
+      pitchWithRotate: false,
+      attributionControl: false   // 署名改用图内那行小字，见 .map-credit
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    // 加载超时就退回静态图，页面上不会留一块空白
+    var giveUp = setTimeout(function(){
+      if (!LIVE) backToStatic();
+    }, 8000);
+
+    map.on('error', function(e){
+      console.warn('[地图]', e && e.error ? e.error.message : e);
+    });
+
+    map.on('load', function(){
+      LIVE = true;
+      clearTimeout(giveUp);
+      Object.keys(AREAS).forEach(function(key){
+        var area = AREAS[key];
+        var el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'marker';
+        el.setAttribute('aria-label', '查看' + area.title + '推荐');
+        el.innerHTML = '<span class="marker__dot"></span><span class="marker__label">'
+                     + area.title + '</span>';
+        el.addEventListener('click', function(){
+          // 手机版没有弹窗，点标记就把下面同名的折叠面板展开并滚过去
+          var panel = document.querySelector('.area[data-area="' + key + '"]');
+          if (!panel) return;
+          panel.open = true;
+          panel.scrollIntoView({
+            behavior: reduceMotion ? 'auto' : 'smooth',
+            block: 'center'
+          });
+        });
+        new maplibregl.Marker({ element: el, anchor: 'top' })
+          .setLngLat(area.coord).addTo(map);
+      });
+    });
+  }).catch(function(err){
+    backToStatic();
+    console.info('[地图] 真地图不可用，继续用静态图：' + err.message);
+  });
+})();
+</script>
+</body>
+</html>

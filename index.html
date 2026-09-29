@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>澳门旅游攻略 · 入口</title>
+<meta name="description" content="澳门旅游攻略：电脑版与手机版入口，含景点、美食、交通、澳门区域地图与出行小贴士。">
+<style>
+:root{
+  --ink:#0a1f3c;
+  --muted:#5c6f8a;
+  --paper:#fff;
+  --mist:#f1f5fa;
+  --line:#d3deeb;
+  --accent:#c8102e;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+         "Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--mist);
+  color:var(--ink);
+  font-family:var(--font);
+  font-size:16px;
+  line-height:1.7;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:28px 20px;
+}
+.card{
+  width:100%;
+  max-width:460px;
+  background:var(--paper);
+  border-radius:16px;
+  box-shadow:0 18px 40px -26px rgba(10,31,60,.65);
+  padding:28px 24px;
+}
+h1{margin:0;font-size:24px;letter-spacing:-.01em;}
+p.lead{margin:10px 0 22px;font-size:14.5px;color:var(--muted);}
+a.entry{
+  display:block;
+  padding:16px 18px;
+  margin-bottom:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  text-decoration:none;
+  color:inherit;
+  transition:border-color .15s,transform .15s;
+}
+a.entry:hover{border-color:var(--ink);transform:translateY(-2px);}
+a.entry strong{display:block;font-size:16.5px;}
+a.entry span{display:block;margin-top:4px;font-size:13.5px;color:var(--muted);}
+.note{
+  margin-top:18px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  font-size:12.5px;
+  color:var(--muted);
+}
+.note a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>澳门旅游攻略</h1>
+  <p class="lead">学生课程作业演示页面。点下面的入口打开对应版本。</p>
+
+  <a class="entry" href="mobile.html">
+    <strong>手机版</strong>
+    <span>底部导航栏、手指左右滑动看图片，适合竖屏阅读</span>
+  </a>
+
+  <a class="entry" href="desktop.html">
+    <strong>电脑版</strong>
+    <span>两栏首屏、景点三列并排，地图可联网显示实景地图</span>
+  </a>
+
+  <p class="note">
+    电脑版联网时会自动把地图升级成可缩放、可拖动的实景地图（OpenStreetMap 数据）；
+    没有网络时使用同一套底图导出的静态图，热点仍然可以点击。<br>
+    照片来自 Wikimedia Commons（CC 授权），作者与许可证见 macau-images/图片来源.md。
+  </p>
+</div>
+</body>
+</html>
