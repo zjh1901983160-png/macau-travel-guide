@@ -2,88 +2,366 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>澳门旅游攻略 · 入口</title>
-<meta name="description" content="澳门旅游攻略：电脑版与手机版入口，含景点、美食、交通、澳门区域地图与出行小贴士。">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>澳门旅游攻略</title>
+<meta name="description" content="澳门旅游攻略：10 个热门景点、必吃美食、常用交通和一张可点击的地图，按 2–3 天自由行安排。含电脑版与手机版两个入口。">
+<meta name="theme-color" content="#0a1f3c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a1f3c'/%3E%3Cpath d='M11 22V10l5 6 5-6v12' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
 <style>
+/* ==================================================================
+   澳门旅游攻略 · 站点入口
+   ------------------------------------------------------------------
+   首页只做一件事：让人在两秒内知道自己该点哪一个版本。
+   所以左边放澳门本身（实景照片铺满），右边放两个版本的“样子”——
+   用 CSS 画的缩略线框，而不是两张一模一样的卡片。
+   配色、字体与内页保持一致：深蓝 + 浅白 + 中文系统无衬线字体。
+   ================================================================== */
+
 :root{
   --ink:#0a1f3c;
-  --muted:#5c6f8a;
-  --paper:#fff;
-  --mist:#f1f5fa;
-  --line:#d3deeb;
+  --ink-2:#12325a;
+  --ink-3:#1d4f86;
+  --muted:#5b7396;
+  --muted-2:#8397b0;
+  --paper:#ffffff;
+  --mist:#f1f6fb;
+  --line:#dee7f2;
+  --line-2:#cbd9ea;
   --accent:#c8102e;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
          "Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
 }
+
 *{box-sizing:border-box;}
+html,body{height:100%;}
 body{
   margin:0;
-  min-height:100vh;
-  background:var(--mist);
+  background:var(--paper);
   color:var(--ink);
   font-family:var(--font);
   font-size:16px;
   line-height:1.7;
+  letter-spacing:.005em;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+a{color:inherit;text-decoration:none;}
+h1,h2,p{margin:0;}
+img{display:block;max-width:100%;}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:4px;}
+
+/* ---------- 版面：左照片 + 右选择 ---------- */
+.cover{
+  display:grid;
+  grid-template-columns:minmax(0,46fr) minmax(0,54fr);
+  min-height:100vh;
+  min-height:100dvh;
+}
+
+/* ---------- 左：澳门本身 ---------- */
+.cover__photo{
+  position:relative;
+  overflow:hidden;
+  background:var(--ink);
+}
+.cover__photo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+/* 压一层深蓝，保证白字在任何一段照片上都读得清 */
+.cover__veil{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(10,31,60,.62) 0%,rgba(10,31,60,.18) 38%,rgba(10,31,60,.86) 100%);
+}
+.cover__text{
+  position:absolute;
+  inset:auto 0 0 0;
+  padding:0 6% 6% 8%;
+  color:#fff;
+}
+.cover__text h1{
+  font-size:clamp(38px,4.2vw,64px);
+  font-weight:800;
+  line-height:1.1;
+  letter-spacing:-.035em;
+}
+.cover__text p{
+  max-width:30ch;
+  margin-top:16px;
+  font-size:clamp(14.5px,1.05vw,16.5px);
+  line-height:1.75;
+  color:rgba(255,255,255,.84);
+}
+.cover__credit{
+  position:absolute;
+  left:8%;
+  bottom:2.2%;
+  font-size:11.5px;
+  color:rgba(255,255,255,.5);
+}
+
+/* ---------- 右：两个版本的样子 ---------- */
+.pick{
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
-  padding:28px 20px;
+  gap:clamp(16px,2.4vh,28px);
+  padding:clamp(28px,5vh,64px) clamp(24px,5vw,72px);
+  background:
+    radial-gradient(900px 460px at 108% -8%,#eaf2fb 0%,rgba(234,242,251,0) 62%),
+    var(--paper);
 }
-.card{
-  width:100%;
-  max-width:460px;
-  background:var(--paper);
-  border-radius:16px;
-  box-shadow:0 18px 40px -26px rgba(10,31,60,.65);
-  padding:28px 24px;
-}
-h1{margin:0;font-size:24px;letter-spacing:-.01em;}
-p.lead{margin:10px 0 22px;font-size:14.5px;color:var(--muted);}
-a.entry{
-  display:block;
-  padding:16px 18px;
-  margin-bottom:12px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  text-decoration:none;
-  color:inherit;
-  transition:border-color .15s,transform .15s;
-}
-a.entry:hover{border-color:var(--ink);transform:translateY(-2px);}
-a.entry strong{display:block;font-size:16.5px;}
-a.entry span{display:block;margin-top:4px;font-size:13.5px;color:var(--muted);}
-.note{
-  margin-top:18px;
-  padding-top:14px;
-  border-top:1px solid var(--line);
-  font-size:12.5px;
+.pick__lead{
+  font-size:clamp(15px,1.15vw,17px);
   color:var(--muted);
 }
-.note a{color:var(--accent);}
+.pick__lead strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:clamp(19px,1.6vw,23px);
+  font-weight:800;
+  letter-spacing:-.02em;
+  color:var(--ink);
+}
+
+/* 一条选择 = 缩略线框 + 文字，整条都是链接 */
+.pick__item{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:clamp(16px,2vw,26px);
+  padding:clamp(14px,1.7vw,20px);
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--paper);
+  transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+.pick__item:hover,
+.pick__item:focus-visible{
+  border-color:var(--ink-3);
+  box-shadow:0 26px 50px -38px rgba(10,31,60,.75);
+  transform:translateY(-2px);
+}
+.pick__name{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  font-size:clamp(17px,1.35vw,20px);
+  font-weight:800;
+  letter-spacing:-.015em;
+}
+/* 「推荐」只在窄屏（手机）上出现，手机用户一眼看到该点哪个 */
+.pick__hint{
+  display:none;
+  padding:1px 8px;
+  border-radius:999px;
+  background:#fdeef1;
+  color:var(--accent);
+  font-size:11.5px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+.pick__desc{
+  display:block;
+  margin-top:7px;
+  font-size:clamp(13.5px,1vw,15px);
+  line-height:1.7;
+  color:var(--muted);
+}
+.pick__open{
+  display:inline-block;
+  margin-top:10px;
+  padding-bottom:2px;
+  border-bottom:1.5px solid var(--line-2);
+  font-size:13.5px;
+  font-weight:700;
+  color:var(--ink-2);
+  transition:border-color .2s ease,color .2s ease;
+}
+.pick__item:hover .pick__open,
+.pick__item:focus-visible .pick__open{
+  border-color:var(--accent);
+  color:var(--accent);
+}
+
+/* ---------- 缩略线框：两个版本各自的长相 ---------- */
+.frame{
+  position:relative;
+  flex:none;
+  border:1px solid var(--line-2);
+  border-radius:10px;
+  background:var(--mist);
+  overflow:hidden;
+}
+/* 线框里的元素统一用一种淡蓝表示，不抢戏 */
+.frame i{
+  position:absolute;
+  display:block;
+  border-radius:3px;
+  background:#cfdff0;
+}
+.frame i.dark{background:#b9cde4;}
+.frame i.accent{background:var(--accent);opacity:.75;}
+
+/* 电脑版：宽幅，首屏两栏 + 下方三列 */
+.frame--desktop{
+  width:clamp(146px,13.5vw,196px);
+  aspect-ratio:16 / 10;
+  padding:0;
+}
+.frame--desktop .bar{left:0;top:0;width:100%;height:7%;border-radius:0;background:#e2ebf6;}
+.frame--desktop .nav{right:6%;top:2.2%;width:26%;height:2.6%;border-radius:2px;background:#c3d6ea;}
+.frame--desktop .hero-t{left:8%;top:22%;width:38%;height:7%;}
+.frame--desktop .hero-l1{left:8%;top:36%;width:34%;height:3%;}
+.frame--desktop .hero-l2{left:8%;top:43%;width:30%;height:3%;}
+.frame--desktop .hero-img{right:6%;top:20%;width:40%;height:34%;border-radius:6px;background:#a8c2de;}
+.frame--desktop .col{top:64%;height:24%;}
+.frame--desktop .col1{left:8%;width:24%;}
+.frame--desktop .col2{left:38%;width:24%;}
+.frame--desktop .col3{left:68%;width:24%;}
+
+/* 手机版：窄高，上方大图 + 若干行 + 底部标签栏 */
+.frame--mobile{
+  width:clamp(58px,5.4vw,74px);
+  aspect-ratio:9 / 16;
+  border-radius:12px;
+}
+.frame--mobile .bar{left:0;top:0;width:100%;height:5%;border-radius:0;background:#e2ebf6;}
+.frame--mobile .shot{left:0;top:5%;width:100%;height:32%;border-radius:0;background:#a8c2de;}
+.frame--mobile .t{left:8%;top:41%;width:64%;height:4%;}
+.frame--mobile .l1{left:8%;top:49%;width:84%;height:2.6%;}
+.frame--mobile .l2{left:8%;top:54%;width:76%;height:2.6%;}
+.frame--mobile .row1{left:8%;top:62%;width:84%;height:12%;border-radius:5px;background:#c3d6ea;}
+.frame--mobile .row2{left:8%;top:77%;width:84%;height:12%;border-radius:5px;background:#c3d6ea;}
+.frame--mobile .tab{left:0;bottom:0;width:100%;height:6%;border-radius:0;background:#e2ebf6;}
+.frame--mobile .dot{width:6%;aspect-ratio:1;border-radius:50%;bottom:1.6%;background:#b9cde4;}
+.frame--mobile .dot1{left:16%;}
+.frame--mobile .dot2{left:36%;}
+.frame--mobile .dot3{left:56%;}
+.frame--mobile .dot4{left:76%;}
+
+/* ---------- 页脚一行 ---------- */
+.pick__foot{
+  margin-top:clamp(4px,1vh,12px);
+  padding-top:clamp(14px,1.8vh,20px);
+  border-top:1px solid var(--line);
+  font-size:12.5px;
+  line-height:1.8;
+  color:var(--muted-2);
+}
+
+/* ---------- 窄屏：照片缩成顶部一条，选择压在下面 ---------- */
+@media (max-width:860px){
+  .cover{grid-template-columns:1fr;}
+  .cover__photo{
+    min-height:clamp(230px,42vh,340px);
+  }
+  .cover__text{padding:0 22px 20px;}
+  /* 窄屏上照片区已经够挤，署名交给下面那行统一写 */
+  .cover__credit{display:none;}
+  .pick{
+    justify-content:flex-start;
+    padding:26px 22px calc(26px + env(safe-area-inset-bottom));
+  }
+  .pick__item{
+    grid-template-columns:auto minmax(0,1fr);
+    gap:16px;
+    padding:14px;
+  }
+  .frame--desktop{width:112px;}
+  .frame--mobile{width:46px;}
+  /* 手机上把手机版顶到最前面，并标出「推荐」；
+     标题和页脚跟着一起排，别让它们被挤到后面去 */
+  .pick__lead{order:-2;}
+  .pick__item--mobile{order:-1;}
+  .pick__foot{order:2;}
+  .pick__item--mobile .pick__hint{display:inline-block;}
+}
+@media (max-width:380px){
+  .frame--desktop{width:92px;}
+  .frame--mobile{width:40px;}
+  .pick__item{gap:12px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.001ms !important;}
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>澳门旅游攻略</h1>
-  <p class="lead">学生课程作业演示页面。点下面的入口打开对应版本。</p>
 
-  <a class="entry" href="mobile.html">
-    <strong>手机版</strong>
-    <span>底部导航栏、手指左右滑动看图片，适合竖屏阅读</span>
-  </a>
+<main class="cover">
 
-  <a class="entry" href="desktop.html">
-    <strong>电脑版</strong>
-    <span>两栏首屏、景点三列并排，地图可联网显示实景地图</span>
-  </a>
+  <!-- 左：先给澳门本身，再给标题 -->
+  <section class="cover__photo">
+    <img src="macau-images/01-hero-skyline.jpg"
+         alt="澳门半岛夜景：南湾一带的新楼与老街隔水相望"
+         width="1920" height="1080">
+    <div class="cover__veil"></div>
+    <div class="cover__text">
+      <h1>澳门旅游攻略</h1>
+      <p>10 个热门景点、必吃美食、常用交通和一张可点击的地图，按 2–3 天自由行安排。</p>
+    </div>
+    <p class="cover__credit">照片来自 Wikimedia Commons，CC 授权</p>
+  </section>
 
-  <p class="note">
-    电脑版联网时会自动把地图升级成可缩放、可拖动的实景地图（OpenStreetMap 数据）；
-    没有网络时使用同一套底图导出的静态图，热点仍然可以点击。<br>
-    照片来自 Wikimedia Commons（CC 授权），作者与许可证见 macau-images/图片来源.md。
-  </p>
-</div>
+  <!-- 右：两个版本各自长什么样 -->
+  <section class="pick">
+    <p class="pick__lead">
+      <strong>同一份攻略，两种读法</strong>
+      内容完全一样，挑你现在这台设备顺手的那个。
+    </p>
+
+    <a class="pick__item pick__item--desktop" href="desktop.html">
+      <span class="frame frame--desktop" aria-hidden="true">
+        <i class="dark bar"></i>
+        <i class="nav"></i>
+        <i class="hero-t dark"></i>
+        <i class="hero-l1"></i>
+        <i class="hero-l2"></i>
+        <i class="hero-img"></i>
+        <i class="dark col col1"></i>
+        <i class="dark col col2"></i>
+        <i class="dark col col3"></i>
+      </span>
+      <span>
+        <span class="pick__name">电脑版</span>
+        <span class="pick__desc">首屏左边看文字、右边看图，十个景点三列并排，一屏看完；地图联网后可以拖动和缩放。</span>
+        <span class="pick__open">打开电脑版</span>
+      </span>
+    </a>
+
+    <a class="pick__item pick__item--mobile" href="mobile.html">
+      <span class="frame frame--mobile" aria-hidden="true">
+        <i class="dark bar"></i>
+        <i class="shot"></i>
+        <i class="dark t"></i>
+        <i class="l1"></i>
+        <i class="l2"></i>
+        <i class="row1"></i>
+        <i class="row2"></i>
+        <i class="tab"></i>
+        <i class="accent dot dot1"></i>
+        <i class="dot dot2"></i>
+        <i class="dot dot3"></i>
+        <i class="dot dot4"></i>
+      </span>
+      <span>
+        <span class="pick__name">手机版<span class="pick__hint">推荐</span></span>
+        <span class="pick__desc">往下滑着看，图片左右滑动切换，底部固定五个入口；地图用双指缩放大。</span>
+        <span class="pick__open">打开手机版</span>
+      </span>
+    </a>
+
+    <p class="pick__foot">
+      两版用同一套照片和同一份文字，都按 2–3 天自由行整理；
+      照片来自 Wikimedia Commons（CC 授权），地图底图 © OpenStreetMap 贡献者，由 OpenFreeMap 提供。
+    </p>
+  </section>
+
+</main>
 </body>
 </html>
