@@ -2,7 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<!-- 手机·兼容版：三处核心交互一个 JavaScript 都不用，任何浏览器/查看器都能用 -->
+<!-- 手机版 · 优化原型
+     沿用原版的「不依赖 JavaScript」原则：
+       1. 轮播翻页  → CSS 滚动吸附（scroll-snap）
+       2. 地图放大  → 勾选框 + CSS 开关
+       3. 区域详情  → HTML 原生 <details>，这里进一步做成三栏横向切换
+     脚本只做锦上添花：阅读进度、滚动渐显、页码/标签高亮、回到顶部、联网换真地图。 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>澳门旅游攻略 · 手机版</title>
 <meta name="description" content="澳门旅游攻略手机版：景点、美食、交通、区域地图与出行小贴士。">
@@ -11,20 +16,9 @@
 
 <style>
 /* ==================================================================
-   澳门旅游攻略 · 手机版（兼容版）
-   ------------------------------------------------------------------
-   三处主要交互全部用浏览器原生能力，即使对方把 JavaScript 拦掉也能用：
-     1. 轮播翻页  → CSS 滚动吸附（scroll-snap），手指左右滑就行
-     2. 地图放大  → 勾选框 + CSS（纯 CSS 的开关，不用脚本）
-     3. 区域详情  → HTML 原生折叠面板 <details>，点一下就地展开
-   脚本只做「锦上添花」：联网时把静态地图换成可缩放的真实地图，
-   再补上阅读进度、当前标签高亮、滚动渐显；失效时页面回到上面的纯 CSS 形态。
-   配色、字体、圆角、阴影等要求与电脑版一致：深蓝 + 浅白 + 系统无衬线字体。
-   照片来自 Wikimedia Commons（CC 授权），作者与许可证见 macau-images/图片来源.md。
+   1. 设计变量（沿用原版色板，改动只在用法上）
    ================================================================== */
-
 :root{
-  /* 和电脑版同一套色板，改一处两边都能对上 */
   --ink:#0a1f3c;
   --ink-2:#12325a;
   --ink-3:#1d4f86;
@@ -39,8 +33,8 @@
   --accent:#c8102e;
   --accent-soft:#fdeef1;
   --gold:#b8934c;
-  --r-xl:24px;
-  --r-lg:18px;
+  --r-xl:26px;
+  --r-lg:20px;
   --r-md:14px;
   --r-sm:10px;
   --sh-1:0 1px 2px rgba(10,31,60,.05), 0 10px 22px -18px rgba(10,31,60,.45);
@@ -59,12 +53,12 @@ html{
 body{
   max-width:520px;
   margin:0 auto;
-  padding-bottom:calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom));
+  padding-bottom:calc(var(--tabbar-h) + 26px + env(safe-area-inset-bottom));
   background:var(--paper);
   color:var(--ink);
   font-family:var(--font);
-  font-size:16.5px;
-  line-height:1.8;
+  font-size:16px;
+  line-height:1.75;
   letter-spacing:.005em;
   -webkit-tap-highlight-color:transparent;
   box-shadow:0 0 60px -30px rgba(10,31,60,.5);
@@ -72,8 +66,7 @@ body{
 img{display:block;max-width:100%;}
 a{color:inherit;text-decoration:none;}
 h1,h2,h3,h4{margin:0;line-height:1.3;letter-spacing:-.012em;text-wrap:balance;}
-p{margin:0;}
-ul,ol,dl,dd,dt{margin:0;padding:0;list-style:none;}
+p,dl,dd,dt,ul,ol{margin:0;padding:0;list-style:none;}
 summary{list-style:none;cursor:pointer;}
 summary::-webkit-details-marker{display:none;}
 a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
@@ -82,7 +75,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
   border-radius:var(--r-sm);
 }
 
-/* ---------- 顶栏（含阅读进度条） ---------- */
+/* ==================================================================
+   2. 顶栏（阅读进度条从 2px 加到 3px，并补上轨道，滚动时看得见）
+   ================================================================== */
 .topbar{
   position:sticky;
   top:0;
@@ -91,8 +86,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  height:58px;
-  padding:0 18px;
+  height:56px;
+  padding:0 16px;
   background:rgba(255,255,255,.9);
   backdrop-filter:blur(12px) saturate(1.4);
   border-bottom:1px solid var(--line);
@@ -101,35 +96,40 @@ a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
   display:flex;
   align-items:center;
   gap:9px;
-  font-size:17px;
+  font-size:16.5px;
   font-weight:800;
   letter-spacing:-.01em;
 }
 .topbar__seal{
-  width:24px;
-  height:24px;
+  width:25px;
+  height:25px;
   display:grid;
   place-items:center;
-  border-radius:8px;
+  border-radius:9px;
   background:linear-gradient(150deg,var(--ink-3),var(--ink));
   color:#fff;
   font-size:12px;
   font-weight:700;
 }
 .topbar__tag{
-  padding:3px 10px;
+  padding:4px 10px;
   border-radius:999px;
   background:var(--mist);
   color:var(--ink-3);
-  font-size:11.5px;
+  font-size:11px;
   font-weight:800;
   letter-spacing:.06em;
 }
-.topbar__progress{
+.topbar__track{
   position:absolute;
   left:0;
+  right:0;
   bottom:-1px;
-  height:2px;
+  height:3px;
+  background:var(--mist-2);
+}
+.topbar__progress{
+  height:100%;
   width:100%;
   background:linear-gradient(90deg,var(--ink-3),var(--accent));
   transform:scaleX(0);
@@ -137,7 +137,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
   transition:transform .12s linear;
 }
 
-/* ---------- 1. 轮播：CSS 滚动吸附，手指左右滑 ---------- */
+/* ==================================================================
+   3. 首屏轮播（保持纯 CSS 滚动吸附）
+   ================================================================== */
+.hero{position:relative;background:var(--ink);padding-bottom:64px;}
 .shots{
   display:flex;
   overflow-x:auto;
@@ -158,145 +161,193 @@ a:focus-visible,button:focus-visible,summary:focus-visible,label:focus-visible{
 .shot__shade{
   position:absolute;
   inset:auto 0 0 0;
-  height:66%;
-  background:linear-gradient(180deg,rgba(10,31,60,0),rgba(10,31,60,.55) 45%,rgba(10,31,60,.94));
+  height:68%;
+  background:linear-gradient(180deg,rgba(10,31,60,0),rgba(10,31,60,.5) 42%,rgba(10,31,60,.94));
 }
-.shot__text{
-  position:absolute;
-  left:20px;
-  right:20px;
-  bottom:30px;
-  color:#fff;
-}
-.shot__name{font-size:22px;font-weight:800;letter-spacing:-.015em;}
-.shot__desc{
-  margin-top:6px;
-  font-size:13.5px;
-  color:rgba(255,255,255,.86);
-}
+.shot__text{position:absolute;left:18px;right:18px;bottom:26px;color:#fff;}
+.shot__name{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;}
+.shot__desc{display:block;margin-top:6px;font-size:13px;color:rgba(255,255,255,.86);}
 .shot__index{
   position:absolute;
-  left:20px;
-  top:18px;
-  padding:3px 10px;
+  left:18px;
+  top:16px;
+  padding:4px 10px;
   border-radius:999px;
-  background:rgba(10,31,60,.42);
+  background:rgba(10,31,60,.4);
   backdrop-filter:blur(6px);
   color:#fff;
-  font-size:11.5px;
+  font-size:11px;
   font-weight:800;
   letter-spacing:.1em;
   font-variant-numeric:tabular-nums;
 }
-
-/* 页码圆点：本身就是锚点，点第几个就跳到第几张 */
-.shot-nav{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  padding:14px 20px 4px;
-  background:var(--ink);
-}
+.hero__bar{display:flex;align-items:center;gap:10px;padding:13px 18px 0;}
+.shot-nav{display:flex;align-items:center;gap:8px;}
 .shot-nav a{
-  width:22px;
+  width:20px;
   height:4px;
   border-radius:999px;
-  background:rgba(255,255,255,.32);
+  background:rgba(255,255,255,.3);
   transition:background .2s ease,width .2s ease;
 }
-.shot-nav a.is-on{background:#fff;width:34px;}
-.shot-nav__hint{
+.shot-nav a.is-on{background:#fff;width:32px;}
+.hero__hint{
   margin-left:auto;
-  font-size:11.5px;
-  color:rgba(255,255,255,.62);
-  letter-spacing:.04em;
+  font-size:11px;
+  color:rgba(255,255,255,.6);
+  letter-spacing:.05em;
 }
 
-/* ---------- 首页介绍 ---------- */
-.intro{padding:30px 20px 6px;}
-.intro h2{
-  font-size:29px;
-  font-weight:800;
-  letter-spacing:-.028em;
+/* ==================================================================
+   4. 概览带：首屏下面立刻给出「这是什么 / 有多少 / 几天」
+      —— 原来的「3 个数字盒 + 2 张说明卡」同质堆叠，这里合并重排
+   ================================================================== */
+.overview-band{
+  background:var(--mist);
+  border-bottom:1px solid var(--line);
+  padding:1px 0 24px;   /* 1px 上内边距：防止下面卡片的负外边距被折叠掉 */
 }
-.intro__lead{
-  margin-top:12px;
-  font-size:15.5px;
-  color:var(--muted);
+.overview{
+  margin:-26px 16px 0;
+  padding:20px 18px 14px;
+  border-radius:var(--r-xl);
+  background:var(--paper);
+  box-shadow:var(--sh-2);
 }
+.overview h1{font-size:27px;font-weight:800;letter-spacing:-.032em;}
+.overview__lead{margin-top:10px;font-size:14.5px;line-height:1.75;color:var(--muted);}
 .stats{
   display:flex;
-  gap:10px;
-  margin-top:20px;
+  margin-top:18px;
+  padding-top:15px;
+  border-top:1px solid var(--line);
 }
-.stat{
-  flex:1;
-  padding:12px 10px;
-  border:1px solid var(--line);
-  border-radius:var(--r-md);
-  background:linear-gradient(180deg,#fff,var(--mist));
-  text-align:center;
+.stat{flex:1;text-align:center;position:relative;}
+.stat + .stat::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:3px;
+  bottom:3px;
+  width:1px;
+  background:var(--line);
 }
-.stat__num{
+.stat b{
   display:block;
-  font-size:19px;
+  font-size:24px;
   font-weight:800;
-  letter-spacing:-.02em;
+  letter-spacing:-.035em;
   font-variant-numeric:tabular-nums;
 }
-.stat__num em{font-style:normal;font-size:12px;font-weight:700;color:var(--muted);margin-left:1px;}
-.stat__label{
-  display:block;
-  margin-top:2px;
-  font-size:11.5px;
-  color:var(--muted);
+.stat b em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--accent);letter-spacing:0;margin-left:1px;}
+.stat span{display:block;margin-top:4px;font-size:11.5px;color:var(--muted);}
+
+/* 行程速览（新增板块，用已有三条路线排成三天） */
+.plan{
+  margin:14px 16px 0;
+  padding:16px 16px 4px;
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  background:var(--paper);
+  box-shadow:var(--sh-1);
 }
-.facts{margin-top:18px;display:grid;gap:12px;}
-.fact{
+.plan__head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+.plan__head h2{font-size:16.5px;font-weight:800;}
+.plan__badge{
+  margin-left:auto;
+  padding:3px 10px;
+  border-radius:999px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:11.5px;
+  font-weight:800;
+}
+.plan__row{
   display:grid;
-  grid-template-columns:auto minmax(0,1fr);
+  grid-template-columns:34px minmax(0,1fr);
   gap:12px;
-  padding:15px 16px;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+.plan__row:last-child{border-bottom:0;}
+.plan__day{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--ink);
+  color:#fff;
+  font-size:12.5px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.plan__row b{display:block;font-size:14.5px;font-weight:800;}
+.plan__row span{display:block;margin-top:3px;font-size:12.5px;color:var(--muted);}
+
+/* 出发前必看：两张卡，收进同一带里 */
+.mini-head{
+  margin:20px 16px 10px;
+  font-size:11.5px;
+  font-weight:800;
+  letter-spacing:.16em;
+  color:var(--ink-3);
+}
+.prep{margin:0 16px;display:grid;gap:10px;}
+.prep-card{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr);
+  gap:12px;
+  padding:14px 15px;
   border:1px solid var(--line);
   border-radius:var(--r-md);
   background:var(--paper);
   box-shadow:var(--sh-1);
 }
-.fact__icon{
-  width:32px;
-  height:32px;
+.prep-card__icon{
+  width:34px;
+  height:34px;
   display:grid;
   place-items:center;
-  border-radius:10px;
+  border-radius:11px;
   background:var(--mist);
   color:var(--ink-3);
 }
-.fact__icon svg{width:17px;height:17px;}
-.fact dt{font-size:14.5px;font-weight:800;}
-.fact dd{margin-top:4px;font-size:14px;color:var(--muted);}
+.prep-card__icon svg{width:18px;height:18px;}
+.prep-card dt{font-size:14.5px;font-weight:800;}
+.prep-card dd{margin-top:5px;font-size:13.5px;line-height:1.7;color:var(--muted);}
 
-/* ---------- 区块通用 ---------- */
-.section{padding:34px 20px 8px;}
+/* ==================================================================
+   5. 区块通用
+   ================================================================== */
+.section{padding:28px 16px 6px;}
 .section--tint{
-  margin-top:26px;
-  padding:32px 20px 22px;
+  margin-top:24px;
+  padding:28px 16px 22px;
   background:var(--mist);
   border-top:1px solid var(--line);
   border-bottom:1px solid var(--line);
 }
 .section--sand{
-  margin-top:26px;
-  padding:32px 20px 22px;
+  margin-top:24px;
+  padding:28px 16px 22px;
   background:var(--sand);
   border-top:1px solid #ece3d6;
   border-bottom:1px solid #ece3d6;
 }
-section[id]{scroll-margin-top:70px;}
+section[id],footer[id]{scroll-margin-top:68px;}
 .kicker{
   display:flex;
   align-items:center;
-  gap:10px;
-  font-size:11.5px;
+  gap:9px;
+  font-size:11px;
   font-weight:800;
   letter-spacing:.16em;
   color:var(--ink-3);
@@ -305,8 +356,8 @@ section[id]{scroll-margin-top:70px;}
 .kicker span{
   display:inline-grid;
   place-items:center;
-  min-width:28px;
-  height:20px;
+  min-width:26px;
+  height:19px;
   padding:0 6px;
   border-radius:999px;
   background:var(--ink);
@@ -314,18 +365,13 @@ section[id]{scroll-margin-top:70px;}
   font-size:11px;
   letter-spacing:.06em;
 }
-.section__head{margin-bottom:20px;}
-.section__head h2{
-  margin-top:11px;
-  font-size:25px;
-  font-weight:800;
-  letter-spacing:-.026em;
-}
+.section__head{margin-bottom:18px;}
+.section__head h2{margin-top:10px;font-size:24px;font-weight:800;letter-spacing:-.028em;}
 .section__head p{
-  margin-top:10px;
-  padding-left:13px;
+  margin-top:9px;
+  padding-left:12px;
   border-left:2px solid var(--line-2);
-  font-size:14px;
+  font-size:13.5px;
   color:var(--muted);
 }
 
@@ -338,10 +384,15 @@ section[id]{scroll-margin-top:70px;}
   transition-delay:var(--d,0ms);
 }
 
-/* ---------- 景点路线 ---------- */
+/* ==================================================================
+   6. 景点路线
+      改动点：缩略图 84×68 → 96×96 方形；序号叠在图上；
+      去掉左侧的竖线轨道（白占 32px 宽度），把宽度还给文字；
+      时长胶囊从灰底改为品牌红，一眼能看到。
+   ================================================================== */
 .route{
-  padding:18px 18px 6px;
-  margin-bottom:16px;
+  padding:0 16px;
+  margin-bottom:14px;
   border:1px solid var(--line);
   border-radius:var(--r-lg);
   background:var(--paper);
@@ -351,94 +402,88 @@ section[id]{scroll-margin-top:70px;}
   display:flex;
   align-items:center;
   gap:10px;
-  padding-bottom:12px;
+  padding:15px 0 13px;
   border-bottom:1px solid var(--line);
-  font-size:15.5px;
+  font-size:16px;
   font-weight:800;
 }
-.route__head::after{content:"";flex:1;height:1px;background:var(--line);}
 .route__count{
+  margin-left:auto;
   flex:none;
-  padding:2px 9px;
+  padding:3px 10px;
   border-radius:999px;
   background:var(--mist);
   color:var(--ink-3);
   font-size:11.5px;
   font-weight:800;
 }
-.stops{position:relative;counter-reset:stop;}
-.stops::before{
-  content:"";
-  position:absolute;
-  left:10px;
-  top:24px;
-  bottom:24px;
-  width:2px;
-  background:linear-gradient(180deg,var(--line-2),var(--line));
-}
+.stops{counter-reset:stop;}
 .stop{
-  position:relative;
+  counter-increment:stop;
   display:grid;
-  grid-template-columns:84px minmax(0,1fr);
-  gap:14px;
-  padding:15px 0 15px 32px;
+  grid-template-columns:96px minmax(0,1fr);
+  gap:13px;
+  padding:14px 0;
   border-bottom:1px solid var(--line);
 }
-.stop:last-child{border-bottom:0;}
-.stop::before{
-  counter-increment:stop;
-  content:counter(stop);
-  position:absolute;
-  left:1px;
-  top:19px;
-  width:20px;
-  height:20px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:var(--ink);
-  color:#fff;
-  font-size:11px;
-  font-weight:800;
-  font-variant-numeric:tabular-nums;
-  box-shadow:0 0 0 4px var(--paper);
-}
+.stop:last-of-type{border-bottom:0;}
 .stop__thumb{
-  width:84px;
-  height:68px;
+  position:relative;
+  width:96px;
+  height:96px;
   border-radius:var(--r-md);
   overflow:hidden;
   background:var(--mist);
 }
-.stop img{width:100%;height:100%;object-fit:cover;}
+.stop__thumb img{width:100%;height:100%;object-fit:cover;}
+.stop__thumb::before{
+  content:counter(stop);
+  position:absolute;
+  left:7px;
+  top:7px;
+  width:21px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(10,31,60,.62);
+  backdrop-filter:blur(6px);
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
 .stop h3{font-size:16px;font-weight:800;}
-.stop p{margin-top:5px;font-size:13.5px;color:var(--muted);}
+.stop p{margin-top:6px;font-size:13.5px;line-height:1.62;color:var(--muted);}
 .stop__time{
   display:inline-block;
-  margin-top:8px;
-  padding:2px 10px;
+  margin-top:9px;
+  padding:3px 10px;
   border-radius:999px;
-  border:1px solid var(--line-2);
-  background:var(--mist);
-  color:var(--ink-2);
+  background:var(--accent-soft);
+  color:var(--accent);
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
 }
 .route__note{
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   gap:8px;
-  margin:12px 0 14px;
+  margin-bottom:14px;
   padding:11px 13px;
   border-radius:var(--r-md);
   background:var(--mist);
-  font-size:13px;
+  font-size:12.5px;
+  line-height:1.65;
   color:var(--muted);
 }
 .route__note svg{width:15px;height:15px;margin-top:3px;color:var(--ink-3);}
 
-/* ---------- 美食：每道菜配一张实景照片 ---------- */
-.menu{display:grid;gap:14px;counter-reset:dish;}
+/* ==================================================================
+   7. 美食：保留大图卡（照片是这页最值钱的内容），
+      图片比例 16/10 → 2/1 压短一点，「可试」升格成红色标签
+   ================================================================== */
+.menu{display:grid;gap:12px;counter-reset:dish;}
 .menu__row{
   position:relative;
   display:flex;
@@ -452,17 +497,17 @@ section[id]{scroll-margin-top:70px;}
 .menu__media{
   position:relative;
   display:block;
-  aspect-ratio:16 / 10;
+  aspect-ratio:2 / 1;
   overflow:hidden;
   background:var(--mist);
 }
 .menu__media img{width:100%;height:100%;object-fit:cover;}
 .menu__no{
   position:absolute;
-  left:12px;
+  left:11px;
   bottom:10px;
-  width:32px;
-  height:32px;
+  width:30px;
+  height:30px;
   display:grid;
   place-items:center;
   border-radius:10px;
@@ -477,86 +522,92 @@ section[id]{scroll-margin-top:70px;}
   counter-increment:dish;
   content:counter(dish,decimal-leading-zero);
 }
-.menu__row dt{padding:15px 16px 0;font-size:16.5px;font-weight:800;}
-.menu__row dd{padding:6px 16px 16px;font-size:14px;color:var(--muted);}
+.menu__row dt{padding:13px 15px 0;font-size:16.5px;font-weight:800;}
+.menu__row dd{padding:6px 15px 15px;font-size:13.5px;line-height:1.65;color:var(--muted);}
 .menu__try{
-  display:inline-block;
+  display:table;          /* 独占一行，不再跟着正文半行换行 */
   margin-top:9px;
-  padding:3px 10px;
+  padding:4px 11px;
   border-radius:999px;
-  background:var(--mist);
-  color:var(--ink-2);
+  background:var(--accent-soft);
+  color:var(--accent);
   font-size:12.5px;
-  font-weight:700;
+  font-weight:800;
 }
 
-/* ---------- 交通：每张卡配一张实景照片 ---------- */
-.modes{display:grid;gap:14px;}
+/* ==================================================================
+   8. 交通：四张 16/10 大图卡换成紧凑对比行
+      长度大约砍掉一半，四种方式的差别反而更容易横向比较
+   ================================================================== */
+.modes{display:grid;gap:11px;}
 .mode{
-  display:flex;
-  flex-direction:column;
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr);
+  gap:13px;
+  padding:13px;
   border:1px solid var(--line);
   border-radius:var(--r-lg);
   background:var(--paper);
   box-shadow:var(--sh-1);
-  overflow:hidden;
 }
-.mode__media{
+.mode__thumb{
   position:relative;
-  display:block;
-  aspect-ratio:16 / 10;
+  width:64px;
+  height:64px;
+  border-radius:var(--r-md);
   overflow:hidden;
   background:var(--mist);
 }
-.mode__media img{width:100%;height:100%;object-fit:cover;}
+.mode__thumb img{width:100%;height:100%;object-fit:cover;}
 .mode__badge{
   position:absolute;
-  left:12px;
-  bottom:10px;
-  width:42px;
-  height:42px;
+  right:3px;
+  bottom:3px;
+  width:24px;
+  height:24px;
   display:grid;
   place-items:center;
-  border-radius:13px;
+  border-radius:8px;
   background:rgba(255,255,255,.94);
   color:var(--ink-3);
-  box-shadow:0 8px 16px -10px rgba(10,31,60,.85);
-  backdrop-filter:blur(4px);
 }
-.mode__badge svg{width:22px;height:22px;}
-.mode__text{padding:16px 18px 18px;}
+.mode__badge svg{width:14px;height:14px;}
+.mode h3{font-size:16px;font-weight:800;}
 .mode__code{
-  display:inline-block;
-  padding:1px 8px;
-  border-radius:6px;
+  margin-left:7px;
+  padding:2px 7px;
+  border-radius:5px;
   background:var(--ink);
   color:#fff;
-  font-size:10px;
+  font-size:9.5px;
   font-weight:800;
-  letter-spacing:.12em;
+  letter-spacing:.1em;
+  vertical-align:2px;
 }
-.mode h3{margin-top:7px;font-size:17px;font-weight:800;}
-.mode p{margin-top:10px;font-size:14px;color:var(--muted);}
-.mode ul{margin-top:10px;display:grid;gap:7px;}
+.mode p{margin-top:7px;font-size:13px;line-height:1.6;color:var(--muted);}
+.mode ul{margin-top:8px;display:grid;gap:5px;}
 .mode li{
   position:relative;
-  padding-left:19px;
-  font-size:13.5px;
+  padding-left:17px;
+  font-size:12.5px;
+  line-height:1.6;
   color:var(--ink-2);
 }
 .mode li::before{
   content:"";
   position:absolute;
   left:2px;
-  top:8px;
-  width:8px;
+  top:7px;
+  width:7px;
   height:4px;
   border-left:2px solid var(--gold);
   border-bottom:2px solid var(--gold);
   transform:rotate(-45deg);
 }
 
-/* ---------- 地图 ---------- */
+/* ==================================================================
+   9. 地图
+   ================================================================== */
 .mapbox{
   position:relative;
   border:1px solid var(--line);
@@ -567,13 +618,12 @@ section[id]{scroll-margin-top:70px;}
 }
 .mapland{
   position:relative;
-  height:clamp(240px,62vw,340px);
+  height:clamp(238px,62vw,340px);
   transition:height .35s ease;
 }
 .mapland img{width:100%;height:100%;object-fit:cover;}
-/* 纯 CSS 放大：勾选框一开，地图框就变高，图片跟着变大 */
 .zoom-check{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
-.zoom-check:checked ~ .mapland{height:clamp(360px,96vw,540px);}
+.zoom-check:checked ~ .mapland{height:clamp(358px,96vw,540px);}
 .zoom-btn{
   position:absolute;
   right:12px;
@@ -590,7 +640,6 @@ section[id]{scroll-margin-top:70px;}
   transition:transform .18s ease;
 }
 .zoom-btn:active{transform:scale(.94);}
-/* 用两条线和边框拼一个放大镜，省掉图片资源 */
 .zoom-btn::before{
   content:"";
   width:15px;
@@ -635,20 +684,13 @@ section[id]{scroll-margin-top:70px;}
   color:var(--muted);
   font-size:10.5px;
 }
-/* 真地图容器：默认藏起来，联网加载成功后由脚本放出来 */
 #liveMap{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s ease;}
 .mapbox.is-live #liveMap{opacity:1;pointer-events:auto;}
 .mapbox.is-live .mapland,
 .mapbox.is-live .zoom-btn{opacity:0;pointer-events:none;transition:opacity .4s ease;}
 .mapbox.is-live .zoom-check{display:none;}
 .mapbox.is-live .map-credit{background:rgba(255,255,255,.94);}
-.map-note{
-  margin-top:12px;
-  font-size:12.5px;
-  color:var(--muted-2);
-}
-
-/* 真地图上的标记 */
+.map-note{margin-top:11px;font-size:12.5px;line-height:1.7;color:var(--muted-2);}
 .marker{
   display:flex;
   align-items:center;
@@ -664,15 +706,16 @@ section[id]{scroll-margin-top:70px;}
   cursor:pointer;
   box-shadow:0 8px 20px -10px rgba(10,31,60,.9);
 }
-.marker__dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--accent);
-}
+.marker__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
 
-/* ---------- 区域折叠面板 ---------- */
-.areas{margin-top:18px;display:grid;gap:10px;}
+/* 区域：三个折叠面板改成三栏横向切换，展开时占满整行 */
+.areas{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  align-items:start;
+}
 .area{
   border:1px solid var(--line);
   border-radius:var(--r-md);
@@ -683,46 +726,45 @@ section[id]{scroll-margin-top:70px;}
 .area summary{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:15px 16px;
-  font-size:16px;
+  justify-content:center;
+  min-height:46px;
+  padding:10px 6px;
+  font-size:13px;
   font-weight:800;
+  line-height:1.25;
+  text-align:center;
+  white-space:nowrap;
 }
-/* 折叠时是「+」，展开后转成「−」 */
-.area summary::after{
-  content:"";
-  flex:none;
-  width:14px;
-  height:14px;
-  background:
-    linear-gradient(var(--ink-3),var(--ink-3)) center/14px 2px no-repeat,
-    linear-gradient(var(--ink-3),var(--ink-3)) center/2px 14px no-repeat;
-  transition:transform .25s ease;
+.area[open]{grid-column:1 / -1;}
+.area[open] summary{
+  justify-content:flex-start;
+  padding:12px 14px;
+  background:var(--mist);
+  border-bottom:1px solid var(--line);
+  font-size:15px;
 }
-.area[open] summary::after{transform:rotate(90deg);}
-.area[open] summary{border-bottom:1px solid var(--line);background:var(--mist);}
-.area__body{padding:16px 16px 18px;}
+.area__body{padding:14px 14px 16px;}
 .area__body h4{
   margin-top:14px;
-  font-size:12.5px;
+  font-size:12px;
   font-weight:800;
   letter-spacing:.12em;
   color:var(--ink-3);
 }
 .area__body h4:first-child{margin-top:0;}
-.area__body ul{margin-top:9px;display:grid;gap:8px;}
+.area__body ul{margin-top:8px;display:grid;gap:7px;}
 .area__body li{
   position:relative;
-  padding-left:17px;
-  font-size:14px;
+  padding-left:16px;
+  font-size:13.5px;
+  line-height:1.6;
   color:var(--ink-2);
 }
 .area__body li::before{
   content:"";
   position:absolute;
   left:2px;
-  top:9px;
+  top:8px;
   width:7px;
   height:7px;
   border-radius:50%;
@@ -730,53 +772,49 @@ section[id]{scroll-margin-top:70px;}
   border:1.5px solid var(--ink-3);
 }
 .area__body p{
-  margin-top:9px;
-  padding:12px 14px;
+  margin-top:8px;
+  padding:11px 13px;
   border-radius:var(--r-md);
   background:var(--mist);
-  font-size:13.5px;
+  font-size:13px;
+  line-height:1.7;
   color:var(--muted);
 }
 
-/* ---------- 页脚 ---------- */
+/* ==================================================================
+   10. 页脚：三张描边卡改成带分隔线的条目，更紧凑
+   ================================================================== */
 .site-footer{
-  margin-top:34px;
-  padding:30px 20px 26px;
+  margin-top:28px;
+  padding:28px 16px 24px;
   background:var(--ink);
   color:#fff;
 }
-.site-footer h2{font-size:22px;font-weight:800;letter-spacing:-.02em;}
-.footer-grid{margin-top:20px;display:grid;gap:12px;}
-.footer-grid > div{
-  padding:16px;
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:var(--r-md);
-  background:rgba(255,255,255,.05);
-}
-.footer-grid h3{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:15px;
-  font-weight:800;
-}
-.footer-grid h3::before{
+.site-footer h2{font-size:21px;font-weight:800;letter-spacing:-.02em;}
+.footer-item{padding:15px 0;border-top:1px solid rgba(255,255,255,.13);}
+.footer-item:first-of-type{margin-top:16px;}
+.footer-item:last-of-type{border-bottom:1px solid rgba(255,255,255,.13);}
+.footer-item h3{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;}
+.footer-item h3::before{
   content:"";
   width:7px;
   height:7px;
   border-radius:2px;
   background:var(--accent);
 }
-.footer-grid p{margin-top:9px;font-size:13.5px;color:rgba(255,255,255,.72);}
+.footer-item p{margin-top:8px;font-size:13px;line-height:1.7;color:rgba(255,255,255,.72);}
 .footer-note{
-  margin-top:22px;
-  padding-top:18px;
-  border-top:1px solid rgba(255,255,255,.14);
-  font-size:12px;
-  color:rgba(255,255,255,.6);
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.13);
+  font-size:11.5px;
+  line-height:1.75;
+  color:rgba(255,255,255,.55);
 }
 
-/* ---------- 底部标签栏（纯锚点跳转） ---------- */
+/* ==================================================================
+   11. 底部标签栏 + 回到顶部
+   ================================================================== */
 .tabbar{
   position:fixed;
   left:0;
@@ -806,7 +844,6 @@ section[id]{scroll-margin-top:70px;}
   transition:color .18s ease;
 }
 .tabbar a svg{width:21px;height:21px;}
-/* 选中态：图标与文字变色，顶上再压一小段红条 */
 .tabbar a.is-on{color:var(--accent);font-weight:800;}
 .tabbar a.is-on::before{
   content:"";
@@ -817,14 +854,48 @@ section[id]{scroll-margin-top:70px;}
   border-radius:0 0 3px 3px;
   background:var(--accent);
 }
+.totop{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
+  z-index:55;
+  max-width:520px;
+  margin:0 auto;
+  display:flex;
+  justify-content:flex-end;
+  padding-right:14px;
+  pointer-events:none;
+  visibility:hidden;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity .25s ease,transform .25s ease,visibility .25s;
+}
+.totop.is-on{visibility:visible;opacity:1;transform:none;}
+.totop a{
+  pointer-events:auto;
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(10px);
+  box-shadow:var(--sh-2);
+  color:var(--ink);
+}
+.totop a svg{width:18px;height:18px;}
 
-/* ---------- 自适应与偏好 ---------- */
+/* ==================================================================
+   12. 自适应与偏好
+   ================================================================== */
 @media (max-width:360px){
-  body{font-size:16px;}
-  .stop{grid-template-columns:72px minmax(0,1fr);gap:12px;}
-  .stop__thumb{width:72px;height:60px;}
-  .stats{gap:8px;}
-  .stat__num{font-size:17px;}
+  .overview h1{font-size:25px;}
+  .stat b{font-size:21px;}
+  .stop{grid-template-columns:84px minmax(0,1fr);gap:11px;}
+  .stop__thumb{width:84px;height:84px;}
+  .area summary{font-size:12px;}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto;}
@@ -832,7 +903,7 @@ section[id]{scroll-margin-top:70px;}
   .js .reveal{opacity:1;transform:none;}
 }
 @media print{
-  .topbar,.tabbar,.shot-nav,.zoom-btn{display:none;}
+  .topbar,.tabbar,.hero__bar,.zoom-btn,.totop{display:none;}
   body{box-shadow:none;}
   .site-footer{background:#fff;color:#000;}
 }
@@ -843,108 +914,131 @@ section[id]{scroll-margin-top:70px;}
 <header class="topbar">
   <span class="topbar__title"><span class="topbar__seal">澳</span>澳门旅游攻略</span>
   <span class="topbar__tag">手机版</span>
-  <div class="topbar__progress" id="progress"></div>
+  <div class="topbar__track"><div class="topbar__progress" id="progress"></div></div>
 </header>
 
-<!-- ========== 1. 轮播：手指左右滑动（CSS 滚动吸附） ========== -->
-<section class="shots" id="home" aria-label="澳门风景图片">
+<!-- ========== 1. 首屏轮播：手指左右滑动（CSS 滚动吸附） ========== -->
+<section class="hero" id="home" aria-label="澳门风景图片">
+  <div class="shots">
 
-  <!-- 【实景照片】澳门半岛夜景 | 作者 Charlie fong | CC BY-SA 4.0 -->
-  <figure class="shot" id="shot1">
-    <img src="macau-images/01-hero-skyline.jpg" alt="澳门半岛夜景天际线" width="1920" height="1080">
-    <div class="shot__shade"></div>
-    <span class="shot__index">01 / 05</span>
-    <figcaption class="shot__text">
-      <div class="shot__name">澳门半岛</div>
-      <p class="shot__desc">南湾一带的新楼和老街隔水相望，晚上最好看</p>
-    </figcaption>
-  </figure>
+    <!-- 【实景照片】澳门半岛夜景 | 作者 Charlie fong | CC BY-SA 4.0 -->
+    <figure class="shot" id="shot1">
+      <img src="macau-images/01-hero-skyline.jpg" alt="澳门半岛夜景天际线" width="1920" height="1080">
+      <div class="shot__shade"></div>
+      <span class="shot__index">01 / 05</span>
+      <figcaption class="shot__text">
+        <b class="shot__name">澳门半岛</b>
+        <span class="shot__desc">南湾一带的新楼和老街隔水相望，晚上最好看</span>
+      </figcaption>
+    </figure>
 
-  <!-- 【实景照片】大三巴牌坊 | 作者 edwin.11 | CC BY 2.0 -->
-  <figure class="shot" id="shot2">
-    <img src="macau-images/02-slide-ruins.jpg" alt="大三巴牌坊（圣保禄教堂前壁）"
-         width="1920" height="1277">
-    <div class="shot__shade"></div>
-    <span class="shot__index">02 / 05</span>
-    <figcaption class="shot__text">
-      <div class="shot__name">大三巴牌坊</div>
-      <p class="shot__desc">一场大火只留下这面前壁，是澳门最出名的一张脸</p>
-    </figcaption>
-  </figure>
+    <!-- 【实景照片】大三巴牌坊 | 作者 edwin.11 | CC BY 2.0 -->
+    <figure class="shot" id="shot2">
+      <img src="macau-images/02-slide-ruins.jpg" alt="大三巴牌坊（圣保禄教堂前壁）" width="1920" height="1277">
+      <div class="shot__shade"></div>
+      <span class="shot__index">02 / 05</span>
+      <figcaption class="shot__text">
+        <b class="shot__name">大三巴牌坊</b>
+        <span class="shot__desc">一场大火只留下这面前壁，是澳门最出名的一张脸</span>
+      </figcaption>
+    </figure>
 
-  <!-- 【实景照片】议事亭前地 | 作者 The Red Hat of Pat Ferrick | Public domain -->
-  <figure class="shot" id="shot3">
-    <img src="macau-images/03-slide-senado.jpg" alt="议事亭前地的波浪碎石地与夜色"
-         width="1542" height="1156">
-    <div class="shot__shade"></div>
-    <span class="shot__index">03 / 05</span>
-    <figcaption class="shot__text">
-      <div class="shot__name">议事亭前地</div>
-      <p class="shot__desc">波浪碎石地配暖黄骑楼，白天晚上两种颜色</p>
-    </figcaption>
-  </figure>
+    <!-- 【实景照片】议事亭前地 | 作者 The Red Hat of Pat Ferrick | Public domain -->
+    <figure class="shot" id="shot3">
+      <img src="macau-images/03-slide-senado.jpg" alt="议事亭前地的波浪碎石地与夜色" width="1542" height="1156">
+      <div class="shot__shade"></div>
+      <span class="shot__index">03 / 05</span>
+      <figcaption class="shot__text">
+        <b class="shot__name">议事亭前地</b>
+        <span class="shot__desc">波浪碎石地配暖黄骑楼，白天晚上两种颜色</span>
+      </figcaption>
+    </figure>
 
-  <!-- 【实景照片】澳门旅游塔 | 作者 AngMoKio | CC BY-SA 3.0 -->
-  <figure class="shot" id="shot4">
-    <img src="macau-images/04-slide-tower.jpg" alt="澳门旅游塔夜景"
-         width="1280" height="960">
-    <div class="shot__shade"></div>
-    <span class="shot__index">04 / 05</span>
-    <figcaption class="shot__text">
-      <div class="shot__name">澳门旅游塔</div>
-      <p class="shot__desc">南湾湖旁的地标，塔上能看完整片半岛</p>
-    </figcaption>
-  </figure>
+    <!-- 【实景照片】澳门旅游塔 | 作者 AngMoKio | CC BY-SA 3.0 -->
+    <figure class="shot" id="shot4">
+      <img src="macau-images/04-slide-tower.jpg" alt="澳门旅游塔夜景" width="1280" height="960">
+      <div class="shot__shade"></div>
+      <span class="shot__index">04 / 05</span>
+      <figcaption class="shot__text">
+        <b class="shot__name">澳门旅游塔</b>
+        <span class="shot__desc">南湾湖旁的地标，塔上能看完整片半岛</span>
+      </figcaption>
+    </figure>
 
-  <!-- 【实景照片】路氹城 | 作者 Jimmy Yao | CC BY-SA 2.0 -->
-  <figure class="shot" id="shot5">
-    <img src="macau-images/05-slide-cotai-night.jpg" alt="路氹城威尼斯人酒店夜景"
-         width="1280" height="960">
-    <div class="shot__shade"></div>
-    <span class="shot__index">05 / 05</span>
-    <figcaption class="shot__text">
-      <div class="shot__name">路氹城</div>
-      <p class="shot__desc">威尼斯人、巴黎人连成一线，入夜全是灯光</p>
-    </figcaption>
-  </figure>
+    <!-- 【实景照片】路氹城 | 作者 Jimmy Yao | CC BY-SA 2.0 -->
+    <figure class="shot" id="shot5">
+      <img src="macau-images/05-slide-cotai-night.jpg" alt="路氹城威尼斯人酒店夜景" width="1280" height="960">
+      <div class="shot__shade"></div>
+      <span class="shot__index">05 / 05</span>
+      <figcaption class="shot__text">
+        <b class="shot__name">路氹城</b>
+        <span class="shot__desc">威尼斯人、巴黎人连成一线，入夜全是灯光</span>
+      </figcaption>
+    </figure>
+
+  </div>
+
+  <div class="hero__bar">
+    <nav class="shot-nav" aria-label="图片页码">
+      <a href="#shot1" aria-label="第 1 张"></a>
+      <a href="#shot2" aria-label="第 2 张"></a>
+      <a href="#shot3" aria-label="第 3 张"></a>
+      <a href="#shot4" aria-label="第 4 张"></a>
+      <a href="#shot5" aria-label="第 5 张"></a>
+    </nav>
+    <span class="hero__hint">左右滑动</span>
+  </div>
 </section>
 
-<!-- 页码圆点：本身就是锚点，点第几个就跳到第几张 -->
-<nav class="shot-nav" aria-label="图片页码">
-  <a href="#shot1" aria-label="第 1 张"></a>
-  <a href="#shot2" aria-label="第 2 张"></a>
-  <a href="#shot3" aria-label="第 3 张"></a>
-  <a href="#shot4" aria-label="第 4 张"></a>
-  <a href="#shot5" aria-label="第 5 张"></a>
-  <span class="shot-nav__hint">左右滑动</span>
-</nav>
+<!-- ========== 2. 概览带：这是什么 / 有多少 / 几天怎么排 ========== -->
+<section class="overview-band">
 
-<!-- ========== 首页介绍 ========== -->
-<section class="intro" id="intro">
-  <h2>澳门旅游攻略</h2>
-  <p class="intro__lead">
-    澳门把四百年的中西生活压进 33 平方公里里。这份攻略整理了 10 个热门景点、
-    必吃美食、常用交通和一张区域地图，按 2–3 天自由行来安排。
-  </p>
-
-  <div class="stats">
-    <div class="stat">
-      <span class="stat__num">10<em>个</em></span>
-      <span class="stat__label">热门景点</span>
-    </div>
-    <div class="stat">
-      <span class="stat__num">3<em>条</em></span>
-      <span class="stat__label">区域路线</span>
-    </div>
-    <div class="stat">
-      <span class="stat__num">2–3<em>天</em></span>
-      <span class="stat__label">自由行节奏</span>
+  <div class="overview">
+    <h1>澳门旅游攻略</h1>
+    <p class="overview__lead">
+      澳门把四百年的中西生活压进 33 平方公里里。这份攻略整理了 10 个热门景点、
+      必吃美食、常用交通和一张区域地图，按 2–3 天自由行来安排。
+    </p>
+    <div class="stats">
+      <div class="stat"><b>10<em>个</em></b><span>热门景点</span></div>
+      <div class="stat"><b>3<em>条</em></b><span>区域路线</span></div>
+      <div class="stat"><b>2–3<em>天</em></b><span>自由行节奏</span></div>
     </div>
   </div>
 
-  <dl class="facts">
-    <div class="fact">
-      <span class="fact__icon" aria-hidden="true">
+  <!-- 行程速览：把下面三条路线直接排成三天 -->
+  <div class="plan">
+    <div class="plan__head">
+      <h2>行程速览</h2>
+      <span class="plan__badge">2–3 天</span>
+    </div>
+    <div class="plan__row">
+      <span class="plan__day">D1</span>
+      <div>
+        <b>澳门半岛 · 历史城区</b>
+        <span>大三巴牌坊 → 议事亭前地 → 大炮台</span>
+      </div>
+    </div>
+    <div class="plan__row">
+      <span class="plan__day">D2</span>
+      <div>
+        <b>澳门半岛 · 山顶与海滨</b>
+        <span>妈阁庙 → 澳门旅游塔 → 东望洋灯塔</span>
+      </div>
+    </div>
+    <div class="plan__row">
+      <span class="plan__day">D3</span>
+      <div>
+        <b>氹仔与路环</b>
+        <span>官也街 → 龙环葡韵 → 路环市区 → 黑沙海滩</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="mini-head">出发前必看</p>
+  <dl class="prep">
+    <div class="prep-card">
+      <span class="prep-card__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
              stroke-linecap="round" stroke-linejoin="round">
           <rect x="3.5" y="5" width="17" height="15.5" rx="3"/>
@@ -957,8 +1051,8 @@ section[id]{scroll-margin-top:70px;}
             4–9 月多雨且是台风季，出发前先看天气预警。</dd>
       </div>
     </div>
-    <div class="fact">
-      <span class="fact__icon" aria-hidden="true">
+    <div class="prep-card">
+      <span class="prep-card__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
              stroke-linecap="round" stroke-linejoin="round">
           <rect x="2.8" y="5" width="18.4" height="14" rx="3"/>
@@ -973,10 +1067,11 @@ section[id]{scroll-margin-top:70px;}
       </div>
     </div>
   </dl>
+
 </section>
 
-<!-- ========== 景点 ========== -->
-<section class="section section--tint" id="spots">
+<!-- ========== 3. 景点 ========== -->
+<section class="section" id="spots">
   <div class="section__head reveal">
     <p class="kicker"><span>01</span>景点路线</p>
     <h2>热门景点</h2>
@@ -1143,7 +1238,7 @@ section[id]{scroll-margin-top:70px;}
   </div>
 </section>
 
-<!-- ========== 美食 ========== -->
+<!-- ========== 4. 美食 ========== -->
 <section class="section section--sand" id="food">
   <div class="section__head reveal">
     <p class="kicker"><span>02</span>吃什么</p>
@@ -1221,7 +1316,7 @@ section[id]{scroll-margin-top:70px;}
   </dl>
 </section>
 
-<!-- ========== 交通 ========== -->
+<!-- ========== 5. 交通 ========== -->
 <section class="section" id="transport">
   <div class="section__head reveal">
     <p class="kicker"><span>03</span>怎么走</p>
@@ -1231,7 +1326,7 @@ section[id]{scroll-margin-top:70px;}
 
   <div class="modes">
     <div class="mode reveal" style="--d:0ms">
-      <span class="mode__media">
+      <span class="mode__thumb">
         <!-- 【实景照片】澳门公共巴士 | 作者 HCCB3947 | CC BY 4.0 -->
         <img src="macau-images/20-transport-bus.jpg" alt="澳门公共巴士 101X 快线停靠亚马喇前地站"
              width="1000" height="625">
@@ -1245,9 +1340,8 @@ section[id]{scroll-margin-top:70px;}
           </svg>
         </span>
       </span>
-      <div class="mode__text">
-        <span class="mode__code">BUS</span>
-        <h3>公共巴士</h3>
+      <div>
+        <h3>公共巴士<span class="mode__code">BUS</span></h3>
         <p>几乎覆盖全部热门景点，是过桥往返半岛、氹仔和路环的主力。</p>
         <ul>
           <li>常用线路：3、10、25 等，车头会写明终点站</li>
@@ -1255,8 +1349,9 @@ section[id]{scroll-margin-top:70px;}
         </ul>
       </div>
     </div>
+
     <div class="mode reveal" style="--d:60ms">
-      <span class="mode__media">
+      <span class="mode__thumb">
         <!-- 【实景照片】澳门轻轨氹仔线 | 作者 LN9267 | CC BY-SA 4.0 -->
         <img src="macau-images/21-transport-lrt.jpg" alt="澳门轻轨氹仔线车厢内部"
              width="1000" height="625">
@@ -1269,9 +1364,8 @@ section[id]{scroll-margin-top:70px;}
           </svg>
         </span>
       </span>
-      <div class="mode__text">
-        <span class="mode__code">LRT</span>
-        <h3>澳门轻轨</h3>
+      <div>
+        <h3>澳门轻轨<span class="mode__code">LRT</span></h3>
         <p>氹仔线沿路氹城运行，串起海洋花园、路氹东、机场和氹仔码头。</p>
         <ul>
           <li>跨海往返氹仔最省时间的方式</li>
@@ -1279,8 +1373,9 @@ section[id]{scroll-margin-top:70px;}
         </ul>
       </div>
     </div>
+
     <div class="mode reveal" style="--d:0ms">
-      <span class="mode__media">
+      <span class="mode__thumb">
         <!-- 【实景照片】威尼斯人酒店穿梭巴士 | 作者 LN9267 | CC BY-SA 4.0 -->
         <img src="macau-images/22-transport-shuttle.jpg" alt="威尼斯人酒店的蓝色穿梭巴士"
              width="1000" height="625">
@@ -1293,9 +1388,8 @@ section[id]{scroll-margin-top:70px;}
           </svg>
         </span>
       </span>
-      <div class="mode__text">
-        <span class="mode__code">SHUT</span>
-        <h3>酒店穿梭巴士</h3>
+      <div>
+        <h3>酒店穿梭巴士<span class="mode__code">SHUT</span></h3>
         <p>大型度假村在口岸、码头和主要景点都设免费班车，去路氹城最省事。</p>
         <ul>
           <li>班次按现场时刻表，通常十几分钟一班</li>
@@ -1303,8 +1397,9 @@ section[id]{scroll-margin-top:70px;}
         </ul>
       </div>
     </div>
+
     <div class="mode reveal" style="--d:60ms">
-      <span class="mode__media">
+      <span class="mode__thumb">
         <!-- 【实景照片】车上的澳门通读卡机 | 作者 LN9267 | CC BY-SA 4.0 -->
         <img src="macau-images/23-transport-macau-pass.jpg" alt="澳门巴士上的澳门通读卡机与投币箱"
              width="1000" height="625">
@@ -1316,9 +1411,8 @@ section[id]{scroll-margin-top:70px;}
           </svg>
         </span>
       </span>
-      <div class="mode__text">
-        <span class="mode__code">CARD</span>
-        <h3>澳门通 / 乘车码</h3>
+      <div>
+        <h3>澳门通 / 乘车码<span class="mode__code">CARD</span></h3>
         <p>储值卡在公交和便利店通用，也可以直接用内地的乘车码扫码上车。</p>
         <ul>
           <li>便利店和客服中心都能充值</li>
@@ -1329,7 +1423,7 @@ section[id]{scroll-margin-top:70px;}
   </div>
 </section>
 
-<!-- ========== 区域地图 + 区域详情 ========== -->
+<!-- ========== 6. 区域地图 + 区域详情 ========== -->
 <section class="section section--tint" id="map">
   <div class="section__head reveal">
     <p class="kicker"><span>04</span>看位置</p>
@@ -1338,8 +1432,6 @@ section[id]{scroll-margin-top:70px;}
        再往下点区域名字，就地展开该区域的推荐。</p>
   </div>
 
-  <!-- 地图框：静态图 + 纯 CSS 放大开关是「没有脚本」时的兜底，
-       联网且地图库加载成功时，脚本会把它换成可缩放的真实地图 -->
   <div class="mapbox reveal" id="mapBox">
     <input type="checkbox" id="mapZoom" class="zoom-check">
     <div class="mapland">
@@ -1349,7 +1441,6 @@ section[id]{scroll-margin-top:70px;}
            width="1600" height="900">
     </div>
     <label class="zoom-btn" for="mapZoom" aria-label="放大或缩小地图"></label>
-    <!-- 真地图容器：联网时脚本会往里挂 MapLibre 地图 -->
     <div id="liveMap" aria-label="澳门实景地图"></div>
     <span class="map-credit">© OpenStreetMap 贡献者 · OpenFreeMap</span>
   </div>
@@ -1358,7 +1449,6 @@ section[id]{scroll-margin-top:70px;}
     瓦片由 OpenFreeMap 提供），没有网络或地图加载失败时自动退回上面这张静态图。
   </p>
 
-  <!-- 三个区域：原生折叠面板，点一下就地展开 -->
   <div class="areas">
     <details class="area reveal" data-area="peninsula">
       <summary>澳门半岛</summary>
@@ -1380,7 +1470,7 @@ section[id]{scroll-margin-top:70px;}
     </details>
 
     <details class="area reveal" data-area="cotai">
-      <summary>氹仔 · 路氹城</summary>
+      <summary>氹仔·路氹城</summary>
       <div class="area__body">
         <h4>推荐景点</h4>
         <ul>
@@ -1419,25 +1509,23 @@ section[id]{scroll-margin-top:70px;}
   </div>
 </section>
 
-<!-- ========== 页脚 ========== -->
+<!-- ========== 7. 页脚 ========== -->
 <footer class="site-footer">
   <h2>出行小贴士</h2>
-  <div class="footer-grid">
-    <div>
-      <h3>货币</h3>
-      <p>通用澳门元（MOP）。港币也普遍通用，多数商家按 1:1 收；街市小吃只收现金，
-         建议随身备少量现金。</p>
-    </div>
-    <div>
-      <h3>电话卡</h3>
-      <p>便利店和电讯门店能买本地储值卡（CTM、3 澳门、SmarTone），
-         常见 3–7 天流量套餐。价格以现场售价为准。</p>
-    </div>
-    <div>
-      <h3>海关注意</h3>
-      <p>出入境对烟酒、现金和受管制物品有限量规定，超额需要申报；回内地携带自用物品有免税额度。
-         具体标准以海关和出入境官方最新公布为准。</p>
-    </div>
+  <div class="footer-item">
+    <h3>货币</h3>
+    <p>通用澳门元（MOP）。港币也普遍通用，多数商家按 1:1 收；街市小吃只收现金，
+       建议随身备少量现金。</p>
+  </div>
+  <div class="footer-item">
+    <h3>电话卡</h3>
+    <p>便利店和电讯门店能买本地储值卡（CTM、3 澳门、SmarTone），
+       常见 3–7 天流量套餐。价格以现场售价为准。</p>
+  </div>
+  <div class="footer-item">
+    <h3>海关注意</h3>
+    <p>出入境对烟酒、现金和受管制物品有限量规定，超额需要申报；回内地携带自用物品有免税额度。
+       具体标准以海关和出入境官方最新公布为准。</p>
   </div>
   <div class="footer-note">
     澳门旅游攻略 · 手机版 · 学生课程作业演示页面<br>
@@ -1446,7 +1534,7 @@ section[id]{scroll-margin-top:70px;}
   </div>
 </footer>
 
-<!-- ========== 底部标签栏（纯锚点跳转） ========== -->
+<!-- ========== 8. 底部标签栏（纯锚点跳转） ========== -->
 <nav class="tabbar" id="tabbar" aria-label="页面导航">
   <a href="#home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -1489,30 +1577,39 @@ section[id]{scroll-margin-top:70px;}
   </a>
 </nav>
 
+<!-- 回到顶部：纯锚点，脚本只负责在滚动后把它显出来 -->
+<div class="totop" id="toTop">
+  <a href="#home" aria-label="回到顶部">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
+    </svg>
+  </a>
+</div>
+
 <script>
 /* ==================================================================
-   手机版脚本：全部是「锦上添花」，任何一段失效都不影响阅读
-   1. 阅读进度条 + 轮播页码高亮 + 底部标签高亮；
-   2. 滚动渐显（尊重系统「减少动态效果」）；
-   3. 联网时把静态地图升级成真地图，失败就安静退出，继续用静态图。
-   没有 JavaScript 时，上面三段（滚动吸附轮播、CSS 放大、<details> 折叠）照常工作。
+   脚本：全部是「锦上添花」，任何一段失效都不影响阅读
    ================================================================== */
 document.documentElement.classList.add('js');
 
 (function enhance(){
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* 1. 顶部阅读进度 */
+  /* 1. 顶部阅读进度 + 回到顶部按钮显隐 */
   var bar = document.getElementById('progress');
-  function updateProgress(){
-    if (!bar) return;
-    var h = document.documentElement.scrollHeight - window.innerHeight;
-    var ratio = h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
-    bar.style.transform = 'scaleX(' + ratio + ')';
+  var toTop = document.getElementById('toTop');
+  function onScroll(){
+    if (bar){
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      var ratio = h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
+      bar.style.transform = 'scaleX(' + ratio + ')';
+    }
+    if (toTop) toTop.classList.toggle('is-on', window.scrollY > 700);
   }
-  updateProgress();
-  window.addEventListener('scroll', updateProgress, { passive: true });
-  window.addEventListener('resize', updateProgress);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
 
   /* 2. 滚动渐显 */
   var revealItems = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
@@ -1533,10 +1630,10 @@ document.documentElement.classList.add('js');
   var shots = document.querySelector('.shots');
   var dots = Array.prototype.slice.call(document.querySelectorAll('.shot-nav a'));
   if (shots && dots.length){
-    function syncDots(){
+    var syncDots = function(){
       var i = Math.round(shots.scrollLeft / shots.clientWidth);
       dots.forEach(function(d, n){ d.classList.toggle('is-on', n === i); });
-    }
+    };
     syncDots();
     shots.addEventListener('scroll', function(){
       window.requestAnimationFrame(syncDots);
@@ -1563,10 +1660,19 @@ document.documentElement.classList.add('js');
     });
   }
 
-  /* 5. 联网增强：把静态地图换成真地图
-     1. 地图库（MapLibre）或瓦片加载失败 → 什么都不做，继续用静态图 + CSS 放大；
-     2. 加载成功 → 给 .mapbox 加 .is-live，静态图和「放大」按钮让位给真地图；
-     3. 点地图上的标记 → 展开下面同名的区域面板并滚过去。 */
+  /* 5. 区域：同一时间只展开一个（折叠面板改横向切换后，避免多开拉长页面） */
+  var areaList = Array.prototype.slice.call(document.querySelectorAll('.area'));
+  areaList.forEach(function(item){
+    item.addEventListener('toggle', function(){
+      if (!item.open) return;
+      areaList.forEach(function(other){
+        if (other !== item) other.open = false;
+      });
+    });
+  });
+
+  /* 6. 联网增强：把静态地图换成真地图，
+        失败就安静退出，继续用静态图 + CSS 放大 */
   (function initLiveMap(){
     var box = document.getElementById('mapBox');
     var container = document.getElementById('liveMap');
@@ -1575,9 +1681,8 @@ document.documentElement.classList.add('js');
     var LIB_JS  = 'https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js';
     var LIB_CSS = 'https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css';
     var STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
-    var CENTER = [113.5530, 22.1565];   // 半岛、氹仔、路环三块的正中间
+    var CENTER = [113.5530, 22.1565];
 
-    // 三个区域：坐标给真地图用，key 对应下面 <details data-area="...">
     var AREAS = {
       peninsula: { title: '澳门半岛',      coord: [113.5463, 22.1965] },
       cotai:     { title: '氹仔 · 路氹城',  coord: [113.5605, 22.1480] },
@@ -1587,9 +1692,6 @@ document.documentElement.classList.add('js');
     var LIVE = false;
     var map = null;
 
-    // 手机上的地图框比电脑矮，缩放级别按框高算出来，
-    // 保证半岛到路环（约 0.105 个纬度）连同标记文字刚好装得下，换机型也不会跑偏。
-    // 注意 MapLibre 用 512px 瓦片，zoom 数值比传统 256px 瓦片大 1。
     function fitZoom(){
       var h = container.clientHeight || 320;
       var metersPerPixel = 0.125 * 111320 / h;
@@ -1625,14 +1727,12 @@ document.documentElement.classList.add('js');
         zoom: fitZoom(),
         minZoom: 9,
         maxZoom: 17,
-        dragRotate: false,          // 手机上不需要旋转，避免误触
+        dragRotate: false,
         pitchWithRotate: false,
-        attributionControl: false   // 署名改用图内那行小字，见 .map-credit
+        attributionControl: false
       });
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
-      /* 静态图要一直顶到「瓦片真的画出来」为止，
-         否则网络半通时手机用户只会看到一块空白的灰框。 */
       function tilesOk(){
         return typeof map.areTilesLoaded !== 'function' || map.areTilesLoaded();
       }
@@ -1644,7 +1744,6 @@ document.documentElement.classList.add('js');
       }
       map.on('idle', function(){ if (tilesOk()) goLive(); });
 
-      // 加载超时就退回静态图，页面上不会留一块空白
       var giveUp = setTimeout(function(){
         if (!LIVE) backToStatic();
       }, 8000);
@@ -1652,7 +1751,6 @@ document.documentElement.classList.add('js');
       var tileErrors = 0;
       map.on('error', function(e){
         console.warn('[地图]', e && e.error ? e.error.message : e);
-        // 瓦片连续报错说明这条路走不通：退回静态图 + CSS 放大
         if (!LIVE && ++tileErrors >= 4){
           clearTimeout(giveUp);
           backToStatic();
@@ -1674,7 +1772,6 @@ document.documentElement.classList.add('js');
           el.innerHTML = '<span class="marker__dot"></span><span class="marker__label">'
                        + area.title + '</span>';
           el.addEventListener('click', function(){
-            // 手机版没有弹窗，点标记就把下面同名的折叠面板展开并滚过去
             var panel = document.querySelector('.area[data-area="' + key + '"]');
             if (!panel) return;
             panel.open = true;
