@@ -1660,7 +1660,18 @@ document.documentElement.classList.add('js');
     });
   }
 
-  /* 5. 区域：同一时间只展开一个（折叠面板改横向切换后，避免多开拉长页面） */
+  /* 5. 区域：同一时间只展开一个；点区域名时让真地图飞过去（和电脑版同一套行为）
+        真地图没就绪时 mapApi.fly 是空实现，页面照常只用静态图 */
+  var mapApi = { fly: function(){} };
+  var mapBoxEl = document.getElementById('mapBox');
+  function keepMapVisible(){
+    if (!mapBoxEl) return;
+    var r = mapBoxEl.getBoundingClientRect();
+    // 只在地图卡真的跑到屏幕外时才滚回来，避免每次都跳一下
+    if (r.bottom < 90 || r.top > window.innerHeight - 90){
+      mapBoxEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    }
+  }
   var areaList = Array.prototype.slice.call(document.querySelectorAll('.area'));
   areaList.forEach(function(item){
     item.addEventListener('toggle', function(){
@@ -1669,6 +1680,13 @@ document.documentElement.classList.add('js');
         if (other !== item) other.open = false;
       });
     });
+    var summary = item.querySelector('summary');
+    if (summary){
+      summary.addEventListener('click', function(){
+        mapApi.fly(item.dataset.area || '');
+        keepMapVisible();
+      });
+    }
   });
 
   /* 6. 联网增强：把静态地图换成真地图，
@@ -1691,6 +1709,13 @@ document.documentElement.classList.add('js');
 
     var LIVE = false;
     var map = null;
+
+    // 点区域名 / 地图标记 → 真地图飞到该区域（和电脑版同款：zoom 14，900ms）
+    mapApi.fly = function(key){
+      var area = AREAS[key];
+      if (!LIVE || !map || !area) return;
+      map.flyTo({ center: area.coord, zoom: 14, duration: reduceMotion ? 0 : 900 });
+    };
 
     function fitZoom(){
       var h = container.clientHeight || 320;
@@ -1779,6 +1804,7 @@ document.documentElement.classList.add('js');
               behavior: reduceMotion ? 'auto' : 'smooth',
               block: 'center'
             });
+            mapApi.fly(key);
           });
           new maplibregl.Marker({ element: el, anchor: 'top' })
             .setLngLat(area.coord).addTo(map);
